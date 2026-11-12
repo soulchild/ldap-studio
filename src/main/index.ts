@@ -5,11 +5,14 @@ import { registerHandlers } from './app/handlers'
 import { AppServices } from './app/services'
 import { importCaCertificate } from './app/certificates'
 import { readValueFile, writeValueFile } from './app/files'
+import { applyAboutPanel, applyIdentity, iconPath } from './app/identity'
 import { installMenu } from './app/menu'
 import { applyTheme, windowBackground } from './app/theme'
 import { restorableBounds, trackWindowState } from './app/window-state'
 import { IpcRouter, type SenderLike } from './ipc/router'
 import { SecretBox } from './store/secrets'
+
+applyIdentity()
 
 /** webContents ids of the app's own windows; IPC from anything else is refused. */
 const appWindows = new Set<number>()
@@ -26,6 +29,8 @@ async function createMainWindow(services: AppServices): Promise<BrowserWindow> {
     ...(saved ? { x: saved.x, y: saved.y } : {}),
     minWidth: 800,
     minHeight: 500,
+    // Windows and Linux take the window icon from here; macOS uses the app bundle's.
+    ...(process.platform === 'darwin' ? {} : { icon: iconPath() }),
     // Matches the theme before the page renders, so a dark window does not flash white.
     backgroundColor: windowBackground(),
     show: false,
@@ -73,6 +78,7 @@ async function createMainWindow(services: AppServices): Promise<BrowserWindow> {
 }
 
 void app.whenReady().then(async () => {
+  applyAboutPanel()
   // No camera, microphone, notifications, geolocation and so on.
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
   session.defaultSession.setPermissionCheckHandler(() => false)
