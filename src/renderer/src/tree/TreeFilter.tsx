@@ -122,7 +122,7 @@ export function TreeFilterBar({
       </div>
       <Checkbox
         className="text-xs text-muted-foreground"
-        label="Whole subtree, not only the children"
+        label="Whole subtree"
         checked={form.subtree}
         onChange={(event) => setForm(connectionId, { subtree: event.target.checked })}
       />

@@ -90,8 +90,8 @@ export function AttributeTable({
                   group === 'objectClass' || group === 'required'
                     ? 'font-semibold text-foreground'
                     : operational
-                      ? 'text-subtle-foreground'
-                      : 'text-muted-foreground',
+                      ? 'text-muted-foreground'
+                      : 'text-foreground',
                 )}
               >
                 <span className="truncate" title={attribute.name}>

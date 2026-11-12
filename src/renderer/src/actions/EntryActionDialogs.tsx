@@ -151,8 +151,7 @@ function CreateDialog({ request, onClose }: DialogProps): React.JSX.Element {
       title="New entry"
       description={
         <>
-          Under <span className="font-mono break-all">{request.dn}</span>. You fill in the attributes next;
-          nothing is created until you save.
+          Parent: <span className="font-mono break-all">{request.dn}</span>.
         </>
       }
       className="w-[min(36rem,calc(100vw-2rem))]"
