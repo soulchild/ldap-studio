@@ -1,5 +1,5 @@
-# Installers for macOS, Windows and Linux (task 14.1). Unsigned: macOS Gatekeeper and Windows
-# SmartScreen warn on first launch until signing is set up.
+# Installers for macOS, Windows and Linux (task 14.1). Not signed with a developer certificate:
+# macOS Gatekeeper and Windows SmartScreen warn on first launch.
 appId: app.ldap-studio
 productName: LDAP Studio
 directories:
@@ -15,7 +15,13 @@ mac:
     - target: dmg
       arch: [arm64, x64]
   category: public.app-category.developer-tools
-  identity: null
+  # Ad-hoc signature: no Apple Developer account needed. Without any signature the bundle keeps
+  # Electron's own, which no longer matches, and macOS reports the app as "damaged" with no way to
+  # open it. Ad-hoc signed, it is merely unidentified: allowed under Privacy & Security.
+  identity: '-'
+  # Only needed for notarization, and it breaks ad-hoc signed Electron apps (library validation).
+  hardenedRuntime: false
+  notarize: false
 dmg:
   artifactName: ${productName}-${version}-${arch}.${ext}
 win:
