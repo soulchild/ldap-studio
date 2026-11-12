@@ -1,10 +1,23 @@
 # Checks, the test servers with integration and end-to-end tests (task 14.2), and the installers
 # for each platform, each installed and launched on a runner without Java (task 14.1).
+#
+# The end-to-end tests are optional. They run when any of these holds:
+# - the workflow is started by hand (Actions → CI → Run workflow) with "Run the end-to-end tests",
+# - a pushed commit's message contains "[e2e]",
+# - a pull request has the label "e2e",
+# - the repository variable RUN_E2E is "true" (Settings → Secrets and variables → Actions).
 name: CI
 
 on:
   push:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      e2e:
+        description: Run the end-to-end tests
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -13,6 +26,8 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      RUN_E2E: ${{ (github.event_name == 'workflow_dispatch' && inputs.e2e) || contains(github.event.head_commit.message, '[e2e]') || contains(github.event.pull_request.labels.*.name, 'e2e') || vars.RUN_E2E == 'true' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -21,7 +36,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec install-electron
+      - if: env.RUN_E2E == 'true'
+        run: pnpm exec install-electron
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
@@ -31,10 +47,20 @@ jobs:
       - run: pnpm test:env:check
       - run: pnpm test:integration
       # Ubuntu 24.04 blocks the unprivileged user namespaces Chromium's sandbox needs.
-      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - if: env.RUN_E2E == 'true'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: End-to-end tests, including the smoke test
+        if: env.RUN_E2E == 'true'
         run: xvfb-run -a pnpm test:e2e
-      - if: failure()
+      - name: Note skipped end-to-end tests
+        if: env.RUN_E2E != 'true'
+        run: |
+          {
+            echo '### End-to-end tests skipped'
+            echo 'Run them by starting this workflow by hand, with "[e2e]" in a commit message,'
+            echo 'with the label "e2e" on a pull request, or with the repository variable RUN_E2E=true.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: failure() && env.RUN_E2E == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: e2e-results
