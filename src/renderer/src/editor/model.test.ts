@@ -10,6 +10,7 @@ import {
   cleaned,
   isChanged,
   isNewValue,
+  orderAttributes,
   removeAttribute,
   removeValue,
   requiredAttributes,
@@ -190,6 +191,53 @@ describe('attributes without an equality rule', () => {
     const before: Working = [...original, { name: 'jpegPhoto', values: [first] }]
     expect(changes(before, addValue(before, 'jpegPhoto', second), photoSchema)).toEqual([
       { operation: 'replace', attribute: 'jpegPhoto', values: [first, second] },
+    ])
+  })
+})
+
+describe('orderAttributes', () => {
+  const order = (working: Working, model = schema) =>
+    orderAttributes(working, model).map(({ attribute, group }) => `${group}:${attribute.name}`)
+
+  it('puts objectClass first, then required, the rest, and operational last, each alphabetical', () => {
+    const shuffled: Working = [
+      { name: 'telephoneNumber', values: ['1'] },
+      { name: 'modifyTimestamp', values: ['20260101000000Z'] },
+      { name: 'sn', values: ['Doe'] },
+      { name: 'mail', values: ['a@x'] },
+      { name: 'entryUUID', values: ['x'] },
+      { name: 'objectClass', values: ['top', 'person'] },
+      { name: 'cn', values: ['John Doe'] },
+    ]
+    expect(order(shuffled)).toEqual([
+      'objectClass:objectClass',
+      'required:cn',
+      'required:sn',
+      'optional:mail',
+      'optional:telephoneNumber',
+      'operational:entryUUID',
+      'operational:modifyTimestamp',
+    ])
+  })
+
+  it('gives the same order whatever order the server used', () => {
+    const forward = order(original)
+    expect(order([...original].reverse())).toEqual(forward)
+  })
+
+  it('sorts case-insensitively and recognizes common operational attributes without a schema', () => {
+    const noSchema = new SchemaModel({ attributeTypes: [], objectClasses: [], syntaxes: [] })
+    const working: Working = [
+      { name: 'createTimestamp', values: ['x'] },
+      { name: 'Zeta', values: ['z'] },
+      { name: 'alpha', values: ['a'] },
+      { name: 'objectClass', values: ['top'] },
+    ]
+    expect(order(working, noSchema)).toEqual([
+      'objectClass:objectClass',
+      'optional:alpha',
+      'optional:Zeta',
+      'operational:createTimestamp',
     ])
   })
 })

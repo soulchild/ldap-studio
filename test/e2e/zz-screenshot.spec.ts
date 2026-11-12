@@ -77,6 +77,21 @@ test('screenshot', async () => {
     await page.waitForTimeout(300)
     await page.screenshot({ path: `scratchpad/shell-${theme}.png` })
   }
+  if (await testServersRunning()) {
+    await page.getByLabel('Show operational attributes').check()
+    await page.evaluate(() => {
+      const table = document.querySelector('[aria-label="Attributes"]')?.parentElement
+      if (table) {
+        table.scrollTop = 0
+      }
+    })
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'scratchpad/attributes-dark.png' })
+    const table = page.getByRole('table', { name: 'Attributes' })
+    await table.getByRole('rowgroup', { name: 'createTimestamp' }).scrollIntoViewIfNeeded()
+    await page.screenshot({ path: 'scratchpad/operational-dark.png' })
+    await page.getByLabel('Show operational attributes').uncheck()
+  }
   await page.keyboard.press('ControlOrMeta+/')
   await page.waitForTimeout(300)
   await page.screenshot({ path: 'scratchpad/shortcuts-dark.png' })
