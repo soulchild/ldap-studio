@@ -223,7 +223,7 @@ test.describe('tree filter', () => {
 
   test('searches only the children when the subtree is not included', async () => {
     await item('dc=example,dc=com').click()
-    await filterForm().getByLabel('Whole subtree, not only the children').uncheck()
+    await filterForm().getByLabel('Whole subtree').uncheck()
     await filterBy('uid', 'equals', 'jdoe')
     await expect(status()).toHaveText('No entries match directly below dc=example,dc=com.')
     await filterBy('ou', 'starts with', 'peo')
