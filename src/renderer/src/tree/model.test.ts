@@ -121,7 +121,9 @@ describe('tree model', () => {
       expect(next.nodes[keyOf(ROOT)]).not.toBe(tree.nodes[keyOf(ROOT)])
     })
 
-    it('flattens 100,000 children quickly and keeps the result correct', () => {
+    // Building the 100,000-node tree (not what is measured) takes several seconds on slow CI
+    // runners, beyond Vitest's default of 5 s; the flattening itself must stay under 250 ms.
+    it('flattens 100,000 children quickly and keeps the result correct', { timeout: 30_000 }, () => {
       let tree = expandedRoot()
       const pages = 200
       for (let page = 0; page < pages; page++) {
