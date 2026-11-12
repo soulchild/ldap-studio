@@ -12,3 +12,4 @@ test/ldap/certs/
 test-results/
 playwright-report/
 .claude/settings.local.json
+.dev-app/

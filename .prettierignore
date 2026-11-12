@@ -8,3 +8,4 @@ scratchpad/
 .corral.local.yml
 test-results/
 playwright-report/
+.dev-app/

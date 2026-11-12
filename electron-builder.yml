@@ -50,3 +50,7 @@ deb:
     - libsecret-1-0
     - libgbm1
     - libasound2 | libasound2t64
+# The About panel and the Windows/Linux window icon load the icon at runtime.
+extraResources:
+  - from: build/icon.png
+    to: icon.png

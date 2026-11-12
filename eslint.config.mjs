@@ -36,7 +36,7 @@ const rendererBoundary = {
 }
 
 export default tseslint.config(
-  { ignores: ['out/', 'dist/', 'coverage/', 'node_modules/', '.pnpm-store/', 'scratchpad/'] },
+  { ignores: ['out/', 'dist/', 'coverage/', 'node_modules/', '.pnpm-store/', 'scratchpad/', '.dev-app/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -46,7 +46,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/main/**/*.ts', 'src/preload/**/*.ts', '*.config.{ts,mts,mjs}', 'test/**/*.{ts,mjs}'],
+    files: [
+      'src/main/**/*.ts',
+      'src/preload/**/*.ts',
+      '*.config.{ts,mts,mjs}',
+      'test/**/*.{ts,mjs}',
+      'scripts/**/*.mjs',
+    ],
     languageOptions: { globals: globals.node },
   },
   {

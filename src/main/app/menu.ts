@@ -50,6 +50,10 @@ export async function installMenu(services: AppServices): Promise<void> {
       ],
     },
     { role: 'windowMenu' },
+    // macOS has About in the app menu; elsewhere it goes in Help.
+    ...(isMac
+      ? []
+      : [{ role: 'help' as const, submenu: [{ role: 'about' as const, label: 'About LDAP Studio' }] }]),
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
