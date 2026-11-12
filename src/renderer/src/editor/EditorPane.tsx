@@ -1,10 +1,11 @@
-import { Copy, MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { Button } from '@renderer/components/ui/button'
 import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Dialog } from '@renderer/components/ui/dialog'
 import { DropdownMenu } from '@renderer/components/ui/dropdown-menu'
+import { CopyButton } from '@renderer/components/CopyButton'
 import { HorizontalScroller } from '@renderer/components/HorizontalScroller'
 import { IconButton } from '@renderer/components/IconButton'
 import { cn } from '@renderer/lib/utils'
@@ -162,12 +163,7 @@ export function EditorPane(): React.JSX.Element {
       {/* The path gets its own bar, apart from the entry's details. */}
       <div className="flex min-h-9 shrink-0 items-center gap-2 border-b bg-background py-1 pr-2.5 pl-5">
         <DnPath dn={entry.dn} rootDns={rootDns} onOpen={openAncestor} />
-        <IconButton
-          label="Copy DN"
-          onClick={() => void window.api.invoke('clipboard.writeText', { text: entry.dn })}
-        >
-          <Copy className="size-3.5" />
-        </IconButton>
+        <CopyButton label="Copy DN" className="size-7" text={entry.dn} />
       </div>
       <header className="flex shrink-0 flex-col gap-3 px-5 py-3.5">
         <div className="flex items-center justify-between gap-4">

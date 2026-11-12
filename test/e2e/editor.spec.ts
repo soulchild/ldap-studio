@@ -146,12 +146,19 @@ test.describe('viewing an entry (task 10.1)', () => {
     await expect(tags.getByRole('listitem').last()).toBeInViewport()
   })
 
-  test('copies the DN from the path bar', async () => {
+  test('copies the DN from the path bar and confirms it for a moment', async () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
-    await editor().getByRole('button', { name: 'Copy DN' }).click()
+    const button = editor().getByRole('button', { name: 'Copy DN' })
+    await button.click()
     await expect
       .poll(() => launched.app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe('uid=jdoe,ou=people,dc=example,dc=com')
+    // A green check and "Copied" for about two seconds, then the copy icon again.
+    await expect(button).toHaveAttribute('data-copied', 'true')
+    await expect(button).toHaveAttribute('title', 'Copied')
+    await expect(button.getByRole('status')).toHaveText('Copied')
+    await expect(button).not.toHaveAttribute('data-copied', /.*/, { timeout: 4000 })
+    await expect(button).toHaveAttribute('title', 'Copy DN')
   })
 
   test('opens an ancestor from the DN path', async () => {
@@ -421,8 +428,19 @@ test.describe('leaving with unsaved changes (task 10.4)', () => {
     const readClipboard = () => launched.app.evaluate(({ clipboard }) => clipboard.readText())
     await open(entryDn)
     await valueInputs('sn').hover()
-    await attribute('sn').getByRole('button', { name: 'Copy sn value' }).click()
+    const copySn = attribute('sn').getByRole('button', { name: 'Copy sn value' })
+    await copySn.click()
     await expect.poll(readClipboard).toBe('Person')
+    // The confirmation stays visible even after the pointer leaves the row (and without focus,
+    // which would keep the row's actions visible anyway).
+    await page.mouse.move(0, 0)
+    await copySn.evaluate((button) => button.blur())
+    await expect(copySn).toHaveAttribute('data-copied', 'true')
+    // (Playwright counts opacity 0 as visible, so check the hover group's opacity itself.)
+    const opacity = () => copySn.evaluate((button) => getComputedStyle(button.parentElement!).opacity)
+    await expect.poll(opacity).toBe('1')
+    // Once the confirmation is over, the actions hide again with the pointer away.
+    await expect.poll(opacity, { timeout: 4000 }).toBe('0')
     await attribute('mail').hover()
     await attribute('mail').getByRole('button', { name: 'Copy all mail values' }).click()
     await expect.poll(readClipboard).toBe('a@example.com\nb@example.com')
