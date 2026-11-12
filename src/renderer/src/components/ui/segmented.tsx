@@ -28,8 +28,8 @@ export function Segmented<T extends string>({
           className={cn(
             'h-7 rounded-[3px] px-3 text-sm transition-colors',
             value === option.value
-              ? 'bg-surface font-medium text-foreground shadow-[0_0_0_1px_var(--border-strong)]'
-              : 'text-muted-foreground hover:text-foreground',
+              ? 'bg-primary font-medium text-primary-foreground'
+              : 'text-muted-foreground hover:bg-hover hover:text-foreground',
           )}
         >
           {option.label}
