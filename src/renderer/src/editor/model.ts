@@ -83,6 +83,76 @@ export function requiredAttributes(working: Working, schema: SchemaModel): strin
   return schema.allowedAttributes(objectClassesOf(working)).required
 }
 
+/**
+ * Operational attributes servers commonly return, for when the schema is not readable. With a
+ * schema, its USAGE decides.
+ */
+const KNOWN_OPERATIONAL = new Set(
+  [
+    'createTimestamp',
+    'modifyTimestamp',
+    'creatorsName',
+    'modifiersName',
+    'entryUUID',
+    'entryCSN',
+    'entryDN',
+    'structuralObjectClass',
+    'subschemaSubentry',
+    'hasSubordinates',
+    'numSubordinates',
+    'contextCSN',
+    'pwdChangedTime',
+    'nsUniqueId',
+    'nsAccountLock',
+    'uSNChanged',
+    'uSNCreated',
+    'whenChanged',
+    'whenCreated',
+  ].map((name) => name.toLowerCase()),
+)
+
+export function isOperationalAttribute(name: string, schema: SchemaModel): boolean {
+  return schema.isOperational(name) || KNOWN_OPERATIONAL.has((name.split(';')[0] ?? name).toLowerCase())
+}
+
+export type AttributeGroup = 'objectClass' | 'required' | 'optional' | 'operational'
+
+const GROUP_ORDER: Record<AttributeGroup, number> = {
+  objectClass: 0,
+  required: 1,
+  optional: 2,
+  operational: 3,
+}
+const byName = new Intl.Collator('en', { sensitivity: 'base', numeric: true })
+
+/**
+ * The display order (entry-editing spec): objectClass first, then the attributes the object
+ * classes require, then the rest, then operational attributes; alphabetical within each group.
+ * Independent of the order the server returned, so rows never jump around.
+ */
+export function orderAttributes(
+  working: Working,
+  schema: SchemaModel,
+): { attribute: EntryAttribute; group: AttributeGroup }[] {
+  const required = new Set(requiredAttributes(working, schema).map((name) => name.toLowerCase()))
+  const groupOf = (name: string): AttributeGroup => {
+    const base = (name.split(';')[0] ?? name).toLowerCase()
+    if (base === 'objectclass') {
+      return 'objectClass'
+    }
+    if (isOperationalAttribute(name, schema)) {
+      return 'operational'
+    }
+    return required.has(schema.canonicalAttributeName(name).toLowerCase()) ? 'required' : 'optional'
+  }
+  return working
+    .map((attribute) => ({ attribute, group: groupOf(attribute.name) }))
+    .sort(
+      (a, b) =>
+        GROUP_ORDER[a.group] - GROUP_ORDER[b.group] || byName.compare(a.attribute.name, b.attribute.name),
+    )
+}
+
 /** Problems that block saving, by attribute name (schema checks before saving). */
 export function validate(working: Working, schema: SchemaModel): Map<string, string> {
   const problems = new Map<string, string>()

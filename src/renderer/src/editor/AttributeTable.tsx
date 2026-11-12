@@ -10,7 +10,7 @@ import {
   isChanged,
   isNewValue,
   removeValue,
-  requiredAttributes,
+  orderAttributes,
   setValue,
   type Working,
 } from './model'
@@ -61,18 +61,19 @@ export function AttributeTable({
         attribute.name.toLowerCase() === name.toLowerCase() &&
         attribute.values.some((value) => typeof value !== 'string'),
     )
-  const required = new Set(requiredAttributes(working, schema).map((name) => name.toLowerCase()))
   const problemFor = (name: string) =>
     [...problems].find(([attribute]) => attribute.toLowerCase() === name.toLowerCase())?.[1]
 
   return (
     <div className="flex flex-col" role="table" aria-label="Attributes">
-      {working.map((attribute) => {
+      {orderAttributes(working, schema).map(({ attribute, group }) => {
+        const operational = group === 'operational'
         const locked = readOnly || !schema.isUserModifiable(attribute.name)
         const singleValued = schema.isSingleValued(attribute.name)
         const changed = isChanged(original, working, attribute.name)
         const problem = problemFor(attribute.name)
-        const isRequired = required.has(attribute.name.toLowerCase())
+        // objectClass is required by every entry (MUST of `top`).
+        const isRequired = group === 'required' || group === 'objectClass'
         return (
           <div
             key={attribute.name}
@@ -81,7 +82,16 @@ export function AttributeTable({
             className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 px-5 py-1 last:border-b-0"
           >
             <div className="flex min-w-0 flex-col pt-1.5">
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 text-sm',
+                  group === 'objectClass' || group === 'required'
+                    ? 'font-semibold text-foreground'
+                    : operational
+                      ? 'text-subtle-foreground'
+                      : 'text-muted-foreground',
+                )}
+              >
                 <span className="truncate" title={attribute.name}>
                   {attribute.name}
                 </span>
@@ -149,6 +159,7 @@ export function AttributeTable({
                       name={attribute.name}
                       value={value}
                       locked={locked}
+                      muted={operational}
                       autoFocus={focusTarget === inputId}
                       onChange={(next) => onChange(setValue(working, attribute.name, index, next))}
                     />
@@ -278,6 +289,7 @@ function ValueField({
   name,
   value,
   locked,
+  muted,
   autoFocus,
   onChange,
 }: {
@@ -285,6 +297,8 @@ function ValueField({
   name: string
   value: AttributeValue
   locked: boolean
+  /** Operational attributes: shown, but quieter than the entry's own data. */
+  muted: boolean
   autoFocus: boolean
   onChange: (value: string) => void
 }): React.JSX.Element {
@@ -293,7 +307,12 @@ function ValueField({
   }
   if (locked) {
     return (
-      <span className="selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm break-all">
+      <span
+        className={cn(
+          'selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm break-all',
+          muted && 'text-muted-foreground',
+        )}
+      >
         {value}
       </span>
     )
@@ -308,6 +327,7 @@ function ValueField({
       onChange={(event) => onChange(event.target.value)}
       className={cn(
         'h-7 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
+        muted && 'text-muted-foreground',
         'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
       )}
     />

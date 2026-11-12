@@ -93,6 +93,41 @@ test.describe('viewing an entry (task 10.1)', () => {
     await expect(valueInputs('createTimestamp')).toHaveCount(0)
   })
 
+  test('lists objectClass, then required, then the rest, with operational attributes last', async () => {
+    await open('uid=jdoe,ou=people,dc=example,dc=com')
+    await editor().getByLabel('Show operational attributes').check()
+    await expect(attribute('createTimestamp')).toBeVisible()
+    const names = await editor()
+      .getByRole('table', { name: 'Attributes' })
+      .getByRole('rowgroup')
+      .evaluateAll((groups) => groups.map((group) => group.getAttribute('aria-label') ?? ''))
+    const byName = (a: string, b: string) => a.localeCompare(b, 'en', { sensitivity: 'base' })
+    const required = ['cn', 'gidNumber', 'homeDirectory', 'sn', 'uid', 'uidNumber']
+    const operational = names.filter((name) =>
+      [
+        'createTimestamp',
+        'creatorsName',
+        'entryCSN',
+        'entryDN',
+        'entryUUID',
+        'hasSubordinates',
+        'modifiersName',
+        'modifyTimestamp',
+        'structuralObjectClass',
+        'subschemaSubentry',
+      ].includes(name),
+    )
+    const rest = names.filter(
+      (name) => name !== 'objectClass' && !required.includes(name) && !operational.includes(name),
+    )
+    expect(names).toEqual([
+      'objectClass',
+      ...required,
+      ...[...rest].sort(byName),
+      ...[...operational].sort(byName),
+    ])
+  })
+
   test('opens an ancestor from the DN path', async () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
     await editor()

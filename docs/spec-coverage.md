@@ -68,33 +68,34 @@ Each scenario in `openspec/changes/ldap-studio-mvp/specs` and the test or checkl
 
 ## Entry editing
 
-| Scenario                                 | Covered by                                                                                   |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Viewing an entry                         | e2e/editor › shows the DN path, one row per value and the required attributes                |
-| Show operational attributes              | e2e/editor › shows operational attributes on request, read-only                              |
-| Add an allowed attribute                 | e2e/editor › suggests only attributes the object classes allow, and respects single values   |
-| Single-valued attribute                  | e2e/editor › suggests only attributes the object classes allow, and respects single values   |
-| Review before saving                     | e2e/editor › previews the changes and saves them as one modify; e2e/shortcuts › Cmd/Ctrl+S   |
-| Discard changes                          | e2e/editor › changes, adds and removes values, marks them pending, and discards              |
-| Server rejects change                    | e2e/editor › shows a server rejection and keeps the pending changes                          |
-| Required attribute removed               | e2e/editor › blocks saving when a required attribute is removed                              |
-| Selecting another entry                  | e2e/editor › asks to save, discard or stay when another entry is selected                    |
-| Concurrent change                        | e2e/editor › detects a concurrent change and reloads on request; AD 6.2                      |
-| New person                               | e2e/actions › creates a person                                                               |
-| Structural class required                | e2e/actions › requires a structural object class                                             |
-| Copy a user entry                        | e2e/actions › copies the user attributes into a draft that is only created on save           |
-| Rename a user                            | e2e/actions › renames an entry, removing or keeping the old name                             |
-| Drag and drop                            | e2e/actions › moves an entry by drag and drop after confirming the old and new DN            |
-| Server refuses subtree move              | e2e/actions › shows a server refusal and leaves the tree unchanged                           |
-| Delete leaf                              | e2e/actions › deletes a leaf entry after confirmation                                        |
-| Delete subtree                           | e2e/actions › deletes a subtree of 121 entries after stating the count; AD 4.2 (Tree Delete) |
-| Permission denied partway                | e2e/actions › reports how far a subtree delete got when permission is missing partway        |
-| Edit other attribute of entry with photo | e2e/binary › leaves a binary value byte-identical when another attribute is saved            |
-| Certificate value                        | e2e/binary › shows an image as a thumbnail and a certificate decoded                         |
-| Active Directory SID                     | unit/binary › formatSid; AD 3.2                                                              |
-| Replace photo                            | e2e/binary › replaces a value from a file and the server stores exactly its bytes            |
-| Save certificate to file                 | e2e/binary › saves a certificate to a file with exactly the stored bytes                     |
-| Copy a value                             | e2e/editor › copies a value and all values of an attribute                                   |
+| Scenario                                 | Covered by                                                                                                                          |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Viewing an entry                         | e2e/editor › shows the DN path, one row per value and the required attributes                                                       |
+| Show operational attributes              | e2e/editor › shows operational attributes on request, read-only                                                                     |
+| Stable attribute order                   | unit/editor model › orderAttributes; e2e/editor › lists objectClass, then required, then the rest, with operational attributes last |
+| Add an allowed attribute                 | e2e/editor › suggests only attributes the object classes allow, and respects single values                                          |
+| Single-valued attribute                  | e2e/editor › suggests only attributes the object classes allow, and respects single values                                          |
+| Review before saving                     | e2e/editor › previews the changes and saves them as one modify; e2e/shortcuts › Cmd/Ctrl+S                                          |
+| Discard changes                          | e2e/editor › changes, adds and removes values, marks them pending, and discards                                                     |
+| Server rejects change                    | e2e/editor › shows a server rejection and keeps the pending changes                                                                 |
+| Required attribute removed               | e2e/editor › blocks saving when a required attribute is removed                                                                     |
+| Selecting another entry                  | e2e/editor › asks to save, discard or stay when another entry is selected                                                           |
+| Concurrent change                        | e2e/editor › detects a concurrent change and reloads on request; AD 6.2                                                             |
+| New person                               | e2e/actions › creates a person                                                                                                      |
+| Structural class required                | e2e/actions › requires a structural object class                                                                                    |
+| Copy a user entry                        | e2e/actions › copies the user attributes into a draft that is only created on save                                                  |
+| Rename a user                            | e2e/actions › renames an entry, removing or keeping the old name                                                                    |
+| Drag and drop                            | e2e/actions › moves an entry by drag and drop after confirming the old and new DN                                                   |
+| Server refuses subtree move              | e2e/actions › shows a server refusal and leaves the tree unchanged                                                                  |
+| Delete leaf                              | e2e/actions › deletes a leaf entry after confirmation                                                                               |
+| Delete subtree                           | e2e/actions › deletes a subtree of 121 entries after stating the count; AD 4.2 (Tree Delete)                                        |
+| Permission denied partway                | e2e/actions › reports how far a subtree delete got when permission is missing partway                                               |
+| Edit other attribute of entry with photo | e2e/binary › leaves a binary value byte-identical when another attribute is saved                                                   |
+| Certificate value                        | e2e/binary › shows an image as a thumbnail and a certificate decoded                                                                |
+| Active Directory SID                     | unit/binary › formatSid; AD 3.2                                                                                                     |
+| Replace photo                            | e2e/binary › replaces a value from a file and the server stores exactly its bytes                                                   |
+| Save certificate to file                 | e2e/binary › saves a certificate to a file with exactly the stored bytes                                                            |
+| Copy a value                             | e2e/editor › copies a value and all values of an attribute                                                                          |
 
 ## Schema model
 

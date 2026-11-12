@@ -15,7 +15,14 @@ The entry editor SHALL show the entry's DN and all its user attributes with thei
 
 #### Scenario: Show operational attributes
 - **WHEN** the user turns on "show operational attributes"
-- **THEN** attributes such as "createTimestamp" and "modifiersName" appear, marked as read-only
+- **THEN** attributes such as "createTimestamp" and "modifiersName" appear at the end of the list in a muted style, marked as read-only
+
+### Requirement: Attribute order
+Attributes SHALL appear in a fixed order regardless of the order the server returns them: "objectClass" first, then the required attributes, then the other attributes, then operational attributes, each group sorted alphabetically ignoring case. "objectClass" and required attributes SHALL be emphasized, and operational attributes SHALL be shown in a muted style.
+
+#### Scenario: Stable attribute order
+- **WHEN** the user opens an entry whose attributes the server returns in any order
+- **THEN** "objectClass" comes first, then "cn" and "sn" (required), then the other attributes alphabetically
 
 ### Requirement: Edit attribute values
 The user SHALL be able to change a value, add a value, add a new attribute, and remove a value or a whole attribute. Adding attributes SHALL offer autocomplete limited to the attributes the entry's object classes allow. Attributes that are not user-modifiable SHALL NOT be editable.
