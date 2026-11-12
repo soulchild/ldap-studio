@@ -1,4 +1,4 @@
-import { Asterisk, Copy, Download, Lock, Plus, Upload, X } from 'lucide-react'
+import { Asterisk, Copy, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
@@ -17,6 +17,7 @@ import {
   type Working,
 } from './model'
 import { BinaryValue } from './BinaryValue'
+import { DnPickerDialog } from './DnPickerDialog'
 import { suggestedFileName } from './file-names'
 
 const actionButton =
@@ -34,6 +35,7 @@ async function chooseFile(): Promise<Uint8Array<ArrayBuffer> | undefined> {
 
 /** The entry's attributes, one row per value (entry-editing spec: view and edit attribute values). */
 export function AttributeTable({
+  connectionId,
   original,
   working,
   schema,
@@ -41,6 +43,8 @@ export function AttributeTable({
   problems,
   onChange,
 }: {
+  /** The entry's connection, for choosing DN values from its directory. */
+  connectionId: string
   original: Working
   working: Working
   schema: SchemaModel
@@ -49,6 +53,7 @@ export function AttributeTable({
   onChange: (working: Working) => void
 }): React.JSX.Element {
   const [focusTarget, setFocusTarget] = useState<string>()
+  const [picking, setPicking] = useState<{ attribute: string; index: number; value: string }>()
   // File dialogs are asynchronous: apply their result to the latest working copy, not the one
   // from the render that opened the dialog.
   const workingRef = useRef(working)
@@ -72,6 +77,7 @@ export function AttributeTable({
         const operational = group === 'operational'
         const locked = readOnly || !schema.isUserModifiable(attribute.name)
         const singleValued = schema.isSingleValued(attribute.name)
+        const dnValued = schema.isDistinguishedName(attribute.name)
         const changed = isChanged(original, working, attribute.name)
         const problem = problemFor(attribute.name)
         // objectClass is required by every entry (MUST of `top`).
@@ -178,6 +184,17 @@ export function AttributeTable({
                       onChange={(next) => onChange(setValue(working, attribute.name, index, next))}
                     />
                     <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100">
+                      {typeof value === 'string' && dnValued && !locked ? (
+                        <button
+                          type="button"
+                          className={actionButton}
+                          aria-label={`Choose ${attribute.name} value from the directory`}
+                          title="Choose entry…"
+                          onClick={() => setPicking({ attribute: attribute.name, index, value })}
+                        >
+                          <FolderTree className="size-3.5" />
+                        </button>
+                      ) : null}
                       {typeof value === 'string' ? (
                         <button
                           type="button"
@@ -291,6 +308,18 @@ export function AttributeTable({
             }
             setFocusTarget(`${existing?.name ?? name}-${existing ? existing.values.length : 0}`)
             onChange(addAttribute(working, existing?.name ?? name))
+          }}
+        />
+      ) : null}
+      {picking ? (
+        <DnPickerDialog
+          connectionId={connectionId}
+          attribute={picking.attribute}
+          initialDn={picking.value}
+          onCancel={() => setPicking(undefined)}
+          onChoose={(dn) => {
+            onChange(setValue(latest(), picking.attribute, picking.index, dn))
+            setPicking(undefined)
           }}
         />
       ) : null}

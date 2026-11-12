@@ -35,6 +35,13 @@ The user SHALL be able to change a value, add a value, add a new attribute, and 
 - **WHEN** an attribute is single-valued and already has a value
 - **THEN** the editor does not offer to add another value
 
+### Requirement: Choose DN values
+Values of attributes whose syntax is a DN (or Name and Optional UID) SHALL offer a dialog to choose an entry from the directory as a tree, opened at the current value when it names an entry. Choosing an entry SHALL set the value to its DN as a pending change; cancelling SHALL leave the value unchanged. Without a readable schema, well-known DN attributes such as "member" and "manager" SHALL offer it too.
+
+#### Scenario: Choose a group member
+- **WHEN** the user opens the chooser on the "member" value "uid=jdoe,ou=people,dc=example,dc=com" and chooses "uid=asmith"
+- **THEN** the chooser opens with "uid=jdoe" selected, and the value becomes "uid=asmith,ou=people,dc=example,dc=com" as a pending change
+
 ### Requirement: Pending changes with preview
 Edits SHALL remain pending until the user saves. The editor SHALL mark pending changes and SHALL let the user review them before saving as a list of the add, replace, and delete operations that will be sent. The user SHALL be able to discard all pending changes.
 

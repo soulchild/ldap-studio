@@ -24,7 +24,7 @@ export function BottomPanel({
   onToggle: () => void
 }): React.JSX.Element {
   return (
-    <section className="flex h-full flex-col bg-surface" aria-label="Search and log">
+    <section className="flex h-full flex-col" aria-label="Search and log">
       <div
         className="flex shrink-0 items-center justify-between gap-2 border-b px-3"
         style={{ height: BOTTOM_BAR_HEIGHT }}

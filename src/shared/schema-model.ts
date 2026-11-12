@@ -31,6 +31,27 @@ export const KNOWN_BINARY_ATTRIBUTES = new Set([
   'unicodepwd',
 ])
 
+/** Syntaxes whose values are DNs: DN, and Name and Optional UID (`uniqueMember`). */
+export const DN_SYNTAXES = new Set([
+  '1.3.6.1.4.1.1466.115.121.1.12', // DN
+  '1.3.6.1.4.1.1466.115.121.1.34', // Name and Optional UID
+])
+
+/** Attributes holding DNs, for when the schema does not say (unreadable, or unknown attribute). */
+export const KNOWN_DN_ATTRIBUTES = new Set([
+  'member',
+  'uniquemember',
+  'manager',
+  'owner',
+  'seealso',
+  'secretary',
+  'roleoccupant',
+  'memberof',
+  'managedby',
+  'directreports',
+  'distinguishedname',
+])
+
 export interface AllowedAttributes {
   /** Canonical names of attributes the object classes require. */
   required: string[]
@@ -117,6 +138,12 @@ export class SchemaModel {
     }
     const syntax = this.syntaxOf(name)
     return syntax !== undefined && BINARY_SYNTAXES.has(syntax)
+  }
+
+  /** Whether the attribute's values are DNs, so they can be chosen from the directory. */
+  isDistinguishedName(name: string): boolean {
+    const syntax = this.syntaxOf(name)
+    return syntax !== undefined ? DN_SYNTAXES.has(syntax) : KNOWN_DN_ATTRIBUTES.has(key(name))
   }
 
   /**

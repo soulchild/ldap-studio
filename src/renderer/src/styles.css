@@ -11,7 +11,9 @@
 :root {
   --radius: 4px;
 
-  /* Surfaces: chrome (sidebar, panel headers) is a shade darker than the content surface. */
+  /* Surfaces: the canvas shows between the panes; chrome (sidebar, panel headers) is a shade
+     darker than the content surface. */
+  --canvas: #e7e9ee;
   --background: #f6f7f9;
   --surface: #ffffff;
   --surface-raised: #ffffff;
@@ -60,6 +62,7 @@
 }
 
 .dark {
+  --canvas: #0e0f12;
   --background: #15161a;
   --surface: #1b1d22;
   --surface-raised: #23252b;
@@ -107,6 +110,7 @@
   --radius-md: var(--radius);
   --radius-lg: 8px;
 
+  --color-canvas: var(--canvas);
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
@@ -188,6 +192,10 @@
     border-radius: 9999px;
     background-clip: padding-box;
     background-color: transparent;
+  }
+  /* Rows that scroll without showing a scrollbar (they would grow taller otherwise). */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
   .is-scrollbar-hovered::-webkit-scrollbar-thumb,
   .is-scrolling::-webkit-scrollbar-thumb {
