@@ -1,5 +1,7 @@
 import { Copy, Download, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Button } from '@renderer/components/ui/button'
+import { Combobox } from '@renderer/components/ui/combobox'
 import { cn } from '@renderer/lib/utils'
 import type { AttributeValue } from '@shared/entry'
 import type { SchemaModel } from '@shared/schema-model'
@@ -356,45 +358,47 @@ function AddAttribute({
       </div>
     )
   }
-  const submit = () => {
-    const match = options.find((option) => option.toLowerCase() === name.trim().toLowerCase())
-    if (name.trim() !== '') {
-      onAdd(match ?? name.trim())
-    }
+  const close = () => {
     setName('')
     setOpen(false)
+  }
+  const submit = (text: string) => {
+    const match = options.find((option) => option.toLowerCase() === text.trim().toLowerCase())
+    if (text.trim() !== '') {
+      onAdd(match ?? text.trim())
+    }
+    close()
   }
   return (
     <form
       className="flex items-center gap-2 px-5 py-2.5"
       onSubmit={(event) => {
         event.preventDefault()
-        submit()
+        submit(name)
+      }}
+      // Opened by accident: clicking anywhere else closes it again while nothing is typed.
+      onBlur={(event) => {
+        if (name.trim() === '' && !event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          close()
+        }
       }}
     >
-      <input
-        aria-label="Attribute to add"
-        list="addable-attributes"
+      <Combobox
+        label="Attribute to add"
         value={name}
-        autoFocus
+        options={options}
         placeholder="Attribute name"
-        spellCheck={false}
-        onChange={(event) => setName(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setOpen(false)
-          }
-        }}
-        className="h-8 w-64 rounded-sm border border-input bg-surface px-2.5 text-sm focus-visible:border-primary focus-visible:outline-none"
+        className="w-64"
+        onChange={setName}
+        onSubmit={submit}
+        onCancel={close}
       />
-      <datalist id="addable-attributes">
-        {options.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-      <button type="submit" className="h-8 rounded-sm px-2 text-sm font-medium hover:bg-hover">
+      <Button type="submit" disabled={name.trim() === ''}>
         Add
-      </button>
+      </Button>
+      <Button variant="ghost" className="text-muted-foreground" onClick={close}>
+        Cancel
+      </Button>
     </form>
   )
 }

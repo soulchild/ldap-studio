@@ -163,22 +163,71 @@ test.describe('editing values (task 10.2)', () => {
   test('suggests only attributes the object classes allow, and respects single values', async () => {
     await open(entryDn)
     await editor().getByRole('button', { name: 'Add attribute' }).click()
-    const suggestions = await editor()
-      .locator('#addable-attributes option')
-      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))
+    const list = page.getByRole('listbox', { name: 'Attribute to add' })
+    const suggestions = await list.getByRole('option').allTextContents()
     expect(suggestions).toContain('displayName')
     expect(suggestions).toContain('title')
     expect(suggestions).not.toContain('uidNumber')
     expect(suggestions).not.toContain('mail')
 
-    await editor().getByLabel('Attribute to add').fill('displayName')
-    await editor().getByLabel('Attribute to add').press('Enter')
+    // The list is long; it scrolls instead of running off the window.
+    const scroller = list.locator('ul')
+    const { scrollHeight, clientHeight } = await scroller.evaluate((element) => ({
+      scrollHeight: element.scrollHeight,
+      clientHeight: element.clientHeight,
+    }))
+    expect(scrollHeight).toBeGreaterThan(clientHeight)
+    await scroller.hover()
+    await page.mouse.wheel(0, 400)
+    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+
+    // Typing filters; the arrow keys pick an option.
+    await editor().getByLabel('Attribute to add').fill('isplayNa')
+    await expect(list.getByRole('option')).toHaveText(['displayName'])
+    await page.keyboard.press('ArrowDown')
+    await expect(list.getByRole('option', { name: 'displayName' })).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('Enter')
     await expect(valueInputs('displayName')).toBeFocused()
     await valueInputs('displayName').fill('Tester')
     await attribute('displayName').hover()
     await expect(attribute('displayName').getByRole('button', { name: 'Add displayName value' })).toHaveCount(
       0,
     )
+  })
+  test('closes an accidentally opened attribute field without adding anything', async () => {
+    await open(entryDn)
+    const addButton = editor().getByRole('button', { name: 'Add attribute' })
+    const field = editor().getByLabel('Attribute to add')
+
+    // Cancel, and Add stays disabled while nothing is typed.
+    await addButton.click()
+    await expect(editor().getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
+    await editor().getByRole('button', { name: 'Cancel' }).click()
+    await expect(field).toHaveCount(0)
+
+    // Clicking elsewhere closes it while it is empty...
+    await addButton.click()
+    await editor().getByRole('heading', { name: 'Test Person' }).click()
+    await expect(field).toHaveCount(0)
+
+    // ...but dragging the list's scrollbar does not.
+    await addButton.click()
+    const scroller = page.getByRole('listbox', { name: 'Attribute to add' }).locator('ul')
+    const box = (await scroller.boundingBox())!
+    await page.mouse.move(box.x + box.width - 3, box.y + 8)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width - 3, box.y + 120, { steps: 5 })
+    await page.mouse.up()
+    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+    await expect(field).toBeFocused()
+
+    // With text typed, clicking elsewhere keeps what was typed; Escape closes it.
+    await field.fill('desc')
+    await editor().getByRole('heading', { name: 'Test Person' }).click()
+    await expect(field).toHaveValue('desc')
+    await field.press('Escape')
+    await expect(field).toHaveCount(0)
+    await expect(editor()).not.toContainText('unsaved')
   })
 })
 
