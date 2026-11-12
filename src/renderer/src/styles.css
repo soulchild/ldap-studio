@@ -50,6 +50,9 @@
   --input: var(--border-strong);
 
   --shadow-popover: 0 4px 16px rgb(17 19 24 / 0.08), 0 1px 3px rgb(17 19 24 / 0.06);
+
+  /* The dropdown chevron in --muted-foreground (a data URI cannot use the variable). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a707c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 .dark {
@@ -76,6 +79,7 @@
   --destructive-foreground: #1b0d0d;
 
   --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b91a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 @theme inline {
@@ -156,6 +160,15 @@
   [contenteditable='true'],
   .selectable {
     user-select: text;
+  }
+  /* One chevron for every dropdown, with room on the right, instead of the platform's arrow. */
+  select {
+    appearance: none;
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 0.75rem;
+    padding-right: 1.75rem;
   }
   @media (prefers-reduced-motion: reduce) {
     *,

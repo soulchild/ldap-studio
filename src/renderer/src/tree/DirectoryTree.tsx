@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ChevronRight, X } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { isWithin } from '@renderer/actions/helpers'
 import { ContextMenu } from '@renderer/components/ui/context-menu'
@@ -57,7 +57,7 @@ export function DirectoryTree({
 }): React.JSX.Element {
   const selected = useTree((store) => store.selected[connectionId])
   const store = useTree.getState()
-  const { collapse, select, cancel, refresh, setFilter, closeFilter } = store
+  const { collapse, select, cancel, refresh } = store
   // On a lost connection only already-loaded nodes can be opened; nothing new is fetched.
   const canLoad = (key: string) => !readOnly || tree.nodes[key]?.childKeys !== undefined
   const expand = (connection: string, key: string) => {
@@ -221,11 +221,6 @@ export function DirectoryTree({
                       onSelect: () => refresh(connectionId, node.key),
                       disabled: readOnly || !isExpandable(node),
                     },
-                    {
-                      label: 'Filter children…',
-                      onSelect: () => setFilter(connectionId, node.key, node.filter),
-                      disabled: !node.expanded || (node.childKeys?.length ?? 0) === 0,
-                    },
                     'separator',
                     {
                       label: 'Delete…',
@@ -295,8 +290,6 @@ export function DirectoryTree({
                   style={indent}
                   onCancel={() => cancel(connectionId, node.key)}
                   onRetry={() => refresh(connectionId, node.key)}
-                  onFilter={(text) => setFilter(connectionId, node.key, text)}
-                  onCloseFilter={() => closeFilter(connectionId, node.key)}
                 />
               )}
             </div>
@@ -381,50 +374,18 @@ function StatusRow({
   style,
   onCancel,
   onRetry,
-  onFilter,
-  onCloseFilter,
 }: {
   row: TreeRow
   node: TreeNode
   style: React.CSSProperties
   onCancel: () => void
   onRetry: () => void
-  onFilter: (text: string) => void
-  onCloseFilter: () => void
 }): React.JSX.Element {
   const loaded = count.format(node.childKeys?.length ?? 0)
   // Lines up with the names of child rows: chevron (20) + gap (4) + icon (14) + gap (4).
   const textStyle = { ...style, paddingLeft: Number(style.paddingLeft) + 42 }
   const link = 'rounded-sm px-1 font-medium text-foreground hover:bg-hover'
   switch (row.kind) {
-    case 'filter':
-      return (
-        <div className="flex h-full items-center gap-1 pr-2" style={textStyle}>
-          <input
-            aria-label={`Filter the children of ${node.rdn}`}
-            value={node.filter}
-            autoFocus={node.filter === ''}
-            placeholder={`Filter ${loaded} entries`}
-            onChange={(event) => onFilter(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                onCloseFilter()
-              }
-            }}
-            className="h-6 min-w-0 flex-1 rounded-sm border border-input bg-surface px-2 text-xs placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:outline-none"
-          />
-          {node.filter !== '' ? (
-            <button
-              type="button"
-              aria-label="Clear filter"
-              onClick={onCloseFilter}
-              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover"
-            >
-              <X className="size-3.5" />
-            </button>
-          ) : null}
-        </div>
-      )
     case 'loading':
       return (
         <div
@@ -462,12 +423,6 @@ function StatusRow({
           <button type="button" className={link} onClick={onRetry}>
             Try again
           </button>
-        </div>
-      )
-    case 'filtered-out':
-      return (
-        <div className="flex h-full items-center text-xs text-muted-foreground" style={textStyle}>
-          No entries match.
         </div>
       )
     default:

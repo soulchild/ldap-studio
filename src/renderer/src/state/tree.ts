@@ -6,7 +6,6 @@ import { create } from 'zustand'
 import { ancestorsOf, parseDnStrict, serializeDn } from '@shared/dn'
 import {
   appendChildren,
-  closeFilter,
   createTree,
   descendantKeys,
   failLoading,
@@ -15,7 +14,6 @@ import {
   keyOf,
   markQueued,
   setExpanded,
-  setFilter,
   startLoading,
   type Tree,
 } from '@renderer/tree/model'
@@ -31,8 +29,6 @@ interface TreeStore {
   refresh: (connectionId: string, key: string) => void
   cancel: (connectionId: string, key: string) => void
   select: (connectionId: string, key: string | undefined) => void
-  setFilter: (connectionId: string, key: string, filter: string) => void
-  closeFilter: (connectionId: string, key: string) => void
   /** Expands the path from its root to `dn` and selects it; false if `dn` is not below a root. */
   reveal: (connectionId: string, dn: string) => Promise<boolean>
 }
@@ -206,14 +202,6 @@ export const useTree = create<TreeStore>((set, get) => {
 
     select(connectionId, key) {
       set((store) => ({ selected: { ...store.selected, [connectionId]: key } }))
-    },
-
-    setFilter(connectionId, key, filter) {
-      change(connectionId, (tree) => setFilter(tree, key, filter))
-    },
-
-    closeFilter(connectionId, key) {
-      change(connectionId, (tree) => closeFilter(tree, key))
     },
 
     async reveal(connectionId, dn) {

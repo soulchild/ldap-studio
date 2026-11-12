@@ -14,6 +14,7 @@ export function Combobox({
   options,
   placeholder,
   className,
+  autoFocus = false,
   onChange,
   onSubmit,
   onCancel,
@@ -23,12 +24,14 @@ export function Combobox({
   options: readonly string[]
   placeholder?: string
   className?: string
+  /** Focus the field and show the list right away. */
+  autoFocus?: boolean
   onChange: (value: string) => void
   onSubmit: (value: string) => void
   onCancel: () => void
 }): React.JSX.Element {
   const listId = useId()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(autoFocus)
   const [active, setActive] = useState(-1)
   const matches = useMemo(() => filterOptions(options, value), [options, value])
   const showList = open && matches.length > 0
@@ -58,10 +61,15 @@ export function Combobox({
           aria-autocomplete="list"
           aria-activedescendant={showList && active >= 0 ? optionId(active) : undefined}
           value={value}
-          autoFocus
+          autoFocus={autoFocus}
           placeholder={placeholder}
           spellCheck={false}
           autoComplete="off"
+          // Options are clicked without taking the focus, so a blur means the user moved on.
+          onBlur={() => {
+            setOpen(false)
+            setActive(-1)
+          }}
           onChange={(event) => {
             onChange(event.target.value)
             setActive(-1)

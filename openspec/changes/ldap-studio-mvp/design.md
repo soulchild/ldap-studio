@@ -91,7 +91,8 @@ The service caches the model per session and sends a serializable snapshot to th
 
 ### 10. Renderer architecture
 - **State:** Zustand stores split by concern: `connections`, `tree` (normalized node map per connection plus expanded set), `editor` (loaded entry, pending changes), `search`, and `log`. No server-cache library, because stream-driven loads map poorly to query caches.
-- **Tree rendering:** the visible tree is flattened into an array (recomputed incrementally on expand, collapse, page arrival, or filter change) and rendered with TanStack Virtual, with fixed row height for O(1) layout. Keyboard navigation is handled on the flattened list.
+- **Tree rendering:** the visible tree is flattened into an array (recomputed incrementally on expand, collapse, or page arrival) and rendered with TanStack Virtual, with fixed row height for O(1) layout. Keyboard navigation is handled on the flattened list.
+- **Tree filter:** a bar at the top of the directory pane, modelled on Directory Studio's quick search (user's choice, replacing an earlier per-node filter of loaded children). Attribute, operator and value become an LDAP filter, searched on the server below the selected entry with scope one or sub, at most 1,000 matches, through the per-connection queue. The matches and the entries leading to them replace the tree until the filter is cleared; picking a match reveals it in the real tree, so clearing returns to it.
 - **Filter field and attribute inputs:** a single-line CodeMirror 6 instance gives syntax highlighting, error marks at the parser offset, and schema-driven completion.
 - **Results table:** TanStack Table + TanStack Virtual. Sorting is client-side over loaded rows.
 - **Layout:** resizable panel groups (shadcn `Resizable`). Sizes are persisted through settings.

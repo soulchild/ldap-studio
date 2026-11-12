@@ -58,7 +58,10 @@ Each scenario in `openspec/changes/ldap-studio-mvp/specs` and the test or checkl
 | Server without paging support           | int/search › marks the result incomplete when a server without paging hits its size limit           |
 | Collapse while loading                  | unit/tree store › cancels loading on collapse and keeps the children loaded so far                  |
 | Scrolling a huge container              | e2e/tree › stays responsive with 100,000 nodes; unit/tree model › flattens 100,000 children quickly |
-| Filter by text                          | e2e/tree › filters the loaded children of a node by text, ignoring case                             |
+| Filter by name                          | e2e/tree › tree filter › finds entries by name below the selected entry; unit/quick-filter          |
+| Entries not loaded yet                  | e2e/tree › tree filter › searches entries that were never loaded, by attribute                      |
+| Only the children                       | e2e/tree › tree filter › searches only the children when the subtree is not included                |
+| Clear the filter                        | e2e/tree › tree filter › finds entries by name … (clearing returns to the picked entry)             |
 | Entry added outside the application     | e2e/tree › shows an entry added by another client after a refresh                                   |
 | Selecting an entry                      | e2e/smoke; e2e/responsiveness (the editor follows the tree selection)                               |
 | Jump to deep entry                      | e2e/tree › jumps to a deep entry, expanding and loading its ancestors                               |
