@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { Attribute, Change, Client } from 'ldapts'
-import { launchApp, relaunch, type LaunchedApp } from './app'
+import { goToDn, launchApp, relaunch, type LaunchedApp } from './app'
 import { OPENLDAP, testServersRunning } from './ldap-env'
 
 let launched: LaunchedApp
@@ -62,8 +62,7 @@ const attribute = (name: string): Locator => editor().getByRole('rowgroup', { na
 const valueInputs = (name: string) => attribute(name).getByLabel(`${name} value`, { exact: true })
 
 async function open(dn: string): Promise<void> {
-  await page.getByLabel('Go to DN').fill(dn)
-  await page.getByLabel('Go to DN').press('Enter')
+  await goToDn(page, dn)
   await expect(editor().getByRole('navigation', { name: 'Entry path' })).toBeVisible()
 }
 
@@ -79,9 +78,10 @@ test.describe('viewing an entry (task 10.1)', () => {
     await expect(path).toContainText('dc=example,dc=com')
     await expect(path).toContainText('ou=people')
     await expect(editor().getByRole('heading', { name: 'jdoe' })).toBeVisible()
-    await expect(attribute('cn')).toContainText('required')
-    await expect(attribute('sn')).toContainText('required')
-    await expect(attribute('mail')).not.toContainText('required')
+    await expect(attribute('cn').getByRole('img', { name: 'Required' })).toBeVisible()
+    await expect(attribute('sn').getByRole('img', { name: 'Required' })).toBeVisible()
+    await expect(attribute('mail').getByRole('img', { name: 'Required' })).toHaveCount(0)
+    await expect(attribute('mail').getByRole('img', { name: 'Read-only' })).toHaveCount(0)
     await expect(valueInputs('telephoneNumber')).toHaveCount(2)
   })
 
@@ -89,7 +89,7 @@ test.describe('viewing an entry (task 10.1)', () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
     await expect(attribute('createTimestamp')).toHaveCount(0)
     await editor().getByLabel('Show operational attributes').check()
-    await expect(attribute('createTimestamp')).toContainText('read-only')
+    await expect(attribute('createTimestamp').getByRole('img', { name: 'Read-only' })).toBeVisible()
     await expect(valueInputs('createTimestamp')).toHaveCount(0)
   })
 

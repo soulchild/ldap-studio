@@ -54,7 +54,7 @@ test('a slow search leaves the tree and editor usable, and Stop keeps the result
   // From here on the server sends 40 KB/s: a page of 500 entries takes a few seconds, all
   // 5,000 far longer than this test.
   proxy.throttle(40_000)
-  await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+  await page.keyboard.press('ControlOrMeta+f')
   await page.getByLabel('Base DN').fill('ou=bulk,dc=example,dc=com')
   await page.getByLabel('Size limit').fill('10000')
   await page.getByLabel('Filter', { exact: true }).click()

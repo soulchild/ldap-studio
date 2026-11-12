@@ -68,8 +68,19 @@ The application SHALL record each directory operation it performs (bind, search,
 - **THEN** the log entry shows the bind DN but not the password
 
 ### Requirement: Keyboard navigation
-All primary workflows (selecting a connection, navigating the tree, opening and editing entries, running a search, DN lookup) SHALL be operable with the keyboard alone, and the application SHALL provide shortcuts for focusing the DN lookup bar and the search view.
+All primary workflows (selecting a connection, navigating the tree, opening and editing entries, running a search, DN lookup) SHALL be operable with the keyboard alone, and the application SHALL provide shortcuts for the command palette, the Go to DN dialog and the search view.
 
 #### Scenario: Jump to DN lookup
 - **WHEN** the user presses the DN lookup shortcut
-- **THEN** the DN lookup bar receives focus with its contents selected
+- **THEN** the Go to DN dialog opens with its field focused
+
+### Requirement: Command palette
+The application SHALL provide a command palette, opened by a shortcut or from the top bar, that lists the commands available in the current state (navigation, actions on the open entry, connecting and disconnecting profiles, theme, keyboard shortcuts), filters them by every typed word, and runs the highlighted command with Enter.
+
+#### Scenario: Run a command by typing
+- **WHEN** the user opens the command palette, types "log" and presses Enter
+- **THEN** the palette closes and the operation log is shown
+
+#### Scenario: Go to DN from the palette
+- **WHEN** the user opens the command palette, types "go to" and presses Enter
+- **THEN** the Go to DN dialog opens with its field focused

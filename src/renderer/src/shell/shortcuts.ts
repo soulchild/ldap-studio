@@ -14,6 +14,7 @@ export interface Shortcut {
 }
 
 export const SHORTCUTS = {
+  palette: { key: 'k', description: 'Open the command palette' },
   dnLookup: { key: 'l', description: 'Go to a DN' },
   search: { key: 'f', description: 'Open the search' },
   save: { key: 's', description: 'Review and save the entry, or create a new one' },

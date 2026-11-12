@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { Client } from 'ldapts'
-import { launchApp, relaunch, type LaunchedApp } from './app'
+import { goToDn, launchApp, relaunch, type LaunchedApp } from './app'
 import { OPENLDAP, testServersRunning } from './ldap-env'
 
 const PHOTO = readFileSync(resolve(__dirname, '../ldap/seed/photo.jpg'))
@@ -71,8 +71,7 @@ const editor = () => page.getByRole('region', { name: 'Entry' })
 const attribute = (name: string) => editor().getByRole('rowgroup', { name, exact: true })
 
 async function open(dn: string): Promise<void> {
-  await page.getByLabel('Go to DN').fill(dn)
-  await page.getByLabel('Go to DN').press('Enter')
+  await goToDn(page, dn)
   await expect(editor().getByRole('navigation', { name: 'Entry path' })).toBeVisible()
 }
 

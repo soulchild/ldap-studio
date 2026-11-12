@@ -1,4 +1,4 @@
-import { Copy, Download, Plus, Upload, X } from 'lucide-react'
+import { Asterisk, Copy, Download, Lock, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
@@ -76,12 +76,14 @@ export function AttributeTable({
         const problem = problemFor(attribute.name)
         // objectClass is required by every entry (MUST of `top`).
         const isRequired = group === 'required' || group === 'objectClass'
+        // A lost connection makes the whole entry read-only; a banner says so, not every row.
+        const lockedBySchema = locked && !readOnly
         return (
           <div
             key={attribute.name}
             role="rowgroup"
             aria-label={attribute.name}
-            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 px-5 py-1 last:border-b-0"
+            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 py-1 pr-5 pl-7 last:border-b-0"
           >
             <div className="flex min-w-0 flex-col pt-1.5">
               <span
@@ -94,6 +96,18 @@ export function AttributeTable({
                       : 'text-foreground',
                 )}
               >
+                {/* In the row's wider left padding, so the names stay in one column. */}
+                <span className="-ml-[18px] flex w-3 shrink-0 justify-center text-subtle-foreground">
+                  {lockedBySchema ? (
+                    <Lock className="size-3" role="img" aria-label="Read-only" strokeWidth={2.25}>
+                      <title>{operational ? 'Read-only: maintained by the server' : 'Read-only'}</title>
+                    </Lock>
+                  ) : isRequired ? (
+                    <Asterisk className="size-3" role="img" aria-label="Required" strokeWidth={2.5}>
+                      <title>Required by the entry's object classes</title>
+                    </Asterisk>
+                  ) : null}
+                </span>
                 <span className="truncate" title={attribute.name}>
                   {attribute.name}
                 </span>
@@ -141,8 +155,6 @@ export function AttributeTable({
                   ) : null}
                 </span>
               </span>
-              {isRequired ? <span className="text-xs text-subtle-foreground">required</span> : null}
-              {locked && !readOnly ? <span className="text-xs text-subtle-foreground">read-only</span> : null}
             </div>
             <div className="flex min-w-0 flex-col">
               {attribute.values.map((value, index) => {
@@ -241,7 +253,7 @@ export function AttributeTable({
           <div
             key={name}
             role="alert"
-            className="flex items-center gap-3 border-b border-border/70 px-5 py-2 text-sm text-destructive"
+            className="flex items-center gap-3 border-b border-border/70 py-2 pr-5 pl-7 text-sm text-destructive"
           >
             <span className="min-w-0 flex-1">{message}</span>
             {!readOnly ? (

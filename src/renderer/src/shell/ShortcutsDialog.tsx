@@ -12,6 +12,7 @@ const LOCAL_KEYS: { keys: string[]; description: string }[] = [
 ]
 
 const GLOBAL: Shortcut[] = [
+  SHORTCUTS.palette,
   SHORTCUTS.dnLookup,
   SHORTCUTS.search,
   SHORTCUTS.save,
