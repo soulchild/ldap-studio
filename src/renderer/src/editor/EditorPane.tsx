@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react'
+import { Copy, MoreHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { Button } from '@renderer/components/ui/button'
@@ -135,8 +135,17 @@ export function EditorPane(): React.JSX.Element {
 
   return (
     <section className="flex h-full flex-col" aria-label="Entry">
-      <header className="flex shrink-0 flex-col gap-3 px-5 pt-3.5 pb-3">
+      {/* The path gets its own bar, apart from the entry's details. */}
+      <div className="flex min-h-9 shrink-0 items-center gap-2 border-b bg-background py-1 pr-2.5 pl-5">
         <DnPath dn={entry.dn} rootDns={rootDns} onOpen={openAncestor} />
+        <IconButton
+          label="Copy DN"
+          onClick={() => void window.api.invoke('clipboard.writeText', { text: entry.dn })}
+        >
+          <Copy className="size-3.5" />
+        </IconButton>
+      </div>
+      <header className="flex shrink-0 flex-col gap-3 px-5 py-3.5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             {/* The tile's top meets the top of the name's capitals and its bottom the tags' bottom. */}

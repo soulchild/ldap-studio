@@ -128,6 +128,14 @@ test.describe('viewing an entry (task 10.1)', () => {
     ])
   })
 
+  test('copies the DN from the path bar', async () => {
+    await open('uid=jdoe,ou=people,dc=example,dc=com')
+    await editor().getByRole('button', { name: 'Copy DN' }).click()
+    await expect
+      .poll(() => launched.app.evaluate(({ clipboard }) => clipboard.readText()))
+      .toBe('uid=jdoe,ou=people,dc=example,dc=com')
+  })
+
   test('opens an ancestor from the DN path', async () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
     await editor()

@@ -25,7 +25,11 @@ export function DnPath({
   const rootIndex = all.findIndex((level) => roots.has(keyOf(serializeDn(level))))
   const levels = rootIndex > 0 ? all.slice(rootIndex) : all
   return (
-    <nav aria-label="Entry path" className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-xs">
+    // Every segment has the same padding; the negative margin lines the first one up with the text below.
+    <nav
+      aria-label="Entry path"
+      className="-ml-1 flex min-w-0 flex-1 flex-wrap items-center gap-x-0.5 gap-y-0.5 text-xs"
+    >
       {levels.map((level, index) => {
         // The root segment is the whole root DN, e.g. dc=example,dc=com.
         const rdn = index === 0 && rootIndex > 0 ? serializeDn(level) : serializeRdn(level[0] ?? [])
@@ -37,7 +41,7 @@ export function DnPath({
               <ChevronRight className="size-3 shrink-0 text-subtle-foreground" aria-hidden />
             ) : null}
             {isLast ? (
-              <span aria-current="page" className="truncate">
+              <span aria-current="page" className="truncate px-1 py-0.5">
                 {label}
               </span>
             ) : (
