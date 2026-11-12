@@ -19,6 +19,7 @@ import {
   startLoading,
   type Tree,
 } from '@renderer/tree/model'
+import { readTreeNode } from '@renderer/tree/read-node'
 import { ancestorsOf, parseDn, serializeDn } from '@shared/dn'
 
 const ROW_HEIGHT = 28
@@ -119,18 +120,33 @@ export function DnPickerDialog({
         ? [...ancestorsOf(parsed.dn), parsed.dn].map((level) => keyOf(serializeDn(level)))
         : []
     const start = path.findIndex((key) => latest.current.rootKeys.includes(key))
-    if (start >= 0) {
+    if (start >= 0 && parsed.ok) {
+      const dns = [...ancestorsOf(parsed.dn), parsed.dn].map((level) => serializeDn(level))
       void (async () => {
-        for (const key of path.slice(start, -1)) {
+        // The deepest entry reached, selected if the value itself cannot be.
+        let reached = path[start] as string
+        for (let index = start; index < path.length - 1; index++) {
+          const key = path[index] as string
+          await expand(key)
           if (stopped) {
             return
           }
-          await expand(key)
+          // An entry the server's list stopped before (size or permission limit) is read
+          // directly and added.
+          const nextKey = path[index + 1] as string
+          if (!latest.current.nodes[nextKey]) {
+            const next = await readTreeNode(connectionId, dns[index + 1] as string)
+            if (stopped) {
+              return
+            }
+            if (!next) {
+              break
+            }
+            update((current) => appendChildren(current, key, [next]))
+          }
+          reached = nextKey
         }
-        const target = path.at(-1)
-        if (!stopped && target && latest.current.nodes[target]) {
-          setSelected(target)
-        }
+        setSelected(reached)
       })()
     } else {
       const first = latest.current.rootKeys[0]

@@ -3,6 +3,7 @@
  * children from main; collapsing it while loading cancels the stream.
  */
 import { create } from 'zustand'
+import { readTreeNode } from '@renderer/tree/read-node'
 import { ancestorsOf, parseDnStrict, serializeDn } from '@shared/dn'
 import {
   appendChildren,
@@ -215,7 +216,9 @@ export const useTree = create<TreeStore>((set, get) => {
       if (start === -1) {
         return false
       }
-      for (const key of path.slice(start, -1)) {
+      const dns = [...ancestorsOf(target), target].map((part) => serializeDn(part))
+      for (let index = start; index < path.length - 1; index++) {
+        const key = path[index] as string
         if (!get().trees[connectionId]?.nodes[key]?.expanded) {
           get().expand(connectionId, key)
         }
@@ -226,7 +229,16 @@ export const useTree = create<TreeStore>((set, get) => {
         if (!loaded) {
           return false
         }
-        // The next level shows up once its parent's children have loaded.
+        // The next level shows up once its parent's children have loaded, unless the server
+        // stopped before it: then read it directly and add it.
+        const nextKey = path[index + 1] as string
+        if (!get().trees[connectionId]?.nodes[nextKey]) {
+          const next = await readTreeNode(connectionId, dns[index + 1] as string)
+          if (!next) {
+            return false
+          }
+          change(connectionId, (current) => appendChildren(current, key, [next]))
+        }
       }
       const targetKey = path.at(-1) as string
       if (!get().trees[connectionId]?.nodes[targetKey]) {

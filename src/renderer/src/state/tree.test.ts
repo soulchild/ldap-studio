@@ -55,6 +55,26 @@ describe('tree store', () => {
     })
   })
 
+  it('reveals an entry the server left out of an incomplete list by reading it directly', async () => {
+    const target = `uid=x,ou=people,${ROOT}`
+    fake.api.invoke.mockImplementation(async (_name: string, request: { dn: string }) =>
+      request.dn === target
+        ? { ok: true, value: { dn: target, attributes: [{ name: 'objectClass', values: ['person'] }] } }
+        : { ok: true, value: null },
+    )
+    const revealed = useTree.getState().reveal(CONNECTION, target)
+    await flush()
+    fake.streams[0]!.push({ kind: 'page', data: { nodes: [node(`ou=people,${ROOT}`, true)] } })
+    fake.streams[0]!.push({ kind: 'done', data: { incomplete: false } })
+    await flush()
+    // The server stops early: the target is not among the children it returns.
+    fake.streams[1]!.push({ kind: 'page', data: { nodes: [node(`uid=a,ou=people,${ROOT}`)] } })
+    fake.streams[1]!.push({ kind: 'done', data: { incomplete: true } })
+    expect(await revealed).toBe(true)
+    expect(useTree.getState().selected[CONNECTION]).toBe(keyOf(target))
+    expect(tree().nodes[keyOf(target)]).toMatchObject({ objectClasses: ['person'], depth: 2 })
+  })
+
   it('does not load again when re-expanding a loaded node', async () => {
     useTree.getState().expand(CONNECTION, keyOf(ROOT))
     await flush()
