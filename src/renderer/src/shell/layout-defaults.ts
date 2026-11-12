@@ -8,3 +8,6 @@ export const DEFAULT_PANE_SIZES: Record<string, number> = {
 
 /** Height of the bottom panel's tab bar, which stays visible when the panel is collapsed. */
 export const BOTTOM_BAR_HEIGHT = 36
+
+/** The collapsed bottom pane: its tab bar plus the pane's top and bottom border. */
+export const COLLAPSED_BOTTOM_HEIGHT = BOTTOM_BAR_HEIGHT + 2

@@ -12,7 +12,7 @@ import { useLayout, type BottomTab } from '@renderer/state/layout'
 import { useUi, type Overlay } from '@renderer/state/ui'
 import { CommandPalette } from './CommandPalette'
 import { GoToDnDialog } from './GoToDnDialog'
-import { BOTTOM_BAR_HEIGHT, DEFAULT_PANE_SIZES } from './layout-defaults'
+import { COLLAPSED_BOTTOM_HEIGHT, DEFAULT_PANE_SIZES } from './layout-defaults'
 import { ResizeHandle } from './ResizeHandle'
 import { SHORTCUTS, useShortcut } from './shortcuts'
 import { ShortcutsDialog } from './ShortcutsDialog'
@@ -81,7 +81,7 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
     flexibleId: 'editor',
     initialSize: size('bottom'),
     onUserResize: remember('bottom'),
-    overrideSize: collapsed ? BOTTOM_BAR_HEIGHT : undefined,
+    overrideSize: collapsed ? COLLAPSED_BOTTOM_HEIGHT : undefined,
   })
 
   const setCollapsedState = (next: boolean) => {
@@ -117,70 +117,80 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
       />
       <CommandPalette />
       <GoToDnDialog />
-      <Group
-        id="main-layout"
-        orientation="horizontal"
-        groupRef={mainGroup}
-        elementRef={mainElement}
-        onLayoutChanged={onMainLayout}
-      >
-        <Panel
-          id="sidebar"
-          defaultSize={`${size('sidebar')}px`}
-          minSize={220}
-          maxSize="60%"
-          className="bg-background"
+      {/* The panes are rounded cards on the canvas, separated by gaps with grips. */}
+      <div className="h-full bg-canvas p-1.5">
+        <Group
+          id="main-layout"
+          orientation="horizontal"
+          groupRef={mainGroup}
+          elementRef={mainElement}
+          onLayoutChanged={onMainLayout}
         >
-          <Group
-            id="sidebar-layout"
-            orientation="vertical"
-            groupRef={sidebarGroup}
-            elementRef={sidebarElement}
-            onLayoutChanged={onSidebarLayout}
-          >
-            <Panel id="directory" minSize={120}>
-              <DirectoryPane />
-            </Panel>
-            <ResizeHandle orientation="vertical" />
-            <Panel id="connections" defaultSize={`${size('connections')}px`} minSize={96}>
-              <ConnectionsPane />
-            </Panel>
-          </Group>
-        </Panel>
-        <ResizeHandle orientation="horizontal" />
-        <Panel id="content" minSize={400}>
-          <div className="flex h-full flex-col">
-            <div className="min-h-0 flex-1">
-              <Group
-                id="content-layout"
-                orientation="vertical"
-                groupRef={contentGroup}
-                elementRef={contentElement}
-                onLayoutChanged={onContentLayout}
-              >
-                <Panel id="editor" minSize={160} className="bg-surface">
-                  <EditorPane />
-                </Panel>
-                <ResizeHandle orientation="vertical" />
-                {/* The first render already uses the saved sizes; useFixedPane keeps them afterwards. */}
-                <Panel
-                  id="bottom"
-                  defaultSize={`${collapsed ? BOTTOM_BAR_HEIGHT : size('bottom')}px`}
-                  minSize={collapsed ? BOTTOM_BAR_HEIGHT : 120}
-                  disabled={collapsed}
+          <Panel id="sidebar" defaultSize={`${size('sidebar')}px`} minSize={220} maxSize="60%">
+            <Group
+              id="sidebar-layout"
+              orientation="vertical"
+              groupRef={sidebarGroup}
+              elementRef={sidebarElement}
+              onLayoutChanged={onSidebarLayout}
+            >
+              <Panel id="directory" minSize={120}>
+                <Card className="bg-background">
+                  <DirectoryPane />
+                </Card>
+              </Panel>
+              <ResizeHandle orientation="vertical" />
+              <Panel id="connections" defaultSize={`${size('connections')}px`} minSize={96}>
+                <Card className="bg-background">
+                  <ConnectionsPane />
+                </Card>
+              </Panel>
+            </Group>
+          </Panel>
+          <ResizeHandle orientation="horizontal" />
+          <Panel id="content" minSize={400}>
+            <div className="flex h-full flex-col">
+              <div className="min-h-0 flex-1">
+                <Group
+                  id="content-layout"
+                  orientation="vertical"
+                  groupRef={contentGroup}
+                  elementRef={contentElement}
+                  onLayoutChanged={onContentLayout}
                 >
-                  <BottomPanel
-                    tab={tab}
-                    collapsed={collapsed}
-                    onTabChange={showTab}
-                    onToggle={() => setCollapsedState(!collapsed)}
-                  />
-                </Panel>
-              </Group>
+                  <Panel id="editor" minSize={160}>
+                    <Card className="bg-surface">
+                      <EditorPane />
+                    </Card>
+                  </Panel>
+                  <ResizeHandle orientation="vertical" />
+                  {/* The first render already uses the saved sizes; useFixedPane keeps them afterwards. */}
+                  <Panel
+                    id="bottom"
+                    defaultSize={`${collapsed ? COLLAPSED_BOTTOM_HEIGHT : size('bottom')}px`}
+                    minSize={collapsed ? COLLAPSED_BOTTOM_HEIGHT : 120}
+                    disabled={collapsed}
+                  >
+                    <Card className="bg-surface">
+                      <BottomPanel
+                        tab={tab}
+                        collapsed={collapsed}
+                        onTabChange={showTab}
+                        onToggle={() => setCollapsedState(!collapsed)}
+                      />
+                    </Card>
+                  </Panel>
+                </Group>
+              </div>
             </div>
-          </div>
-        </Panel>
-      </Group>
+          </Panel>
+        </Group>
+      </div>
     </>
   )
+}
+
+/** One pane: a rounded, bordered card filling its panel. */
+function Card({ className, children }: { className: string; children: React.ReactNode }): React.JSX.Element {
+  return <div className={`h-full overflow-hidden rounded-lg border ${className}`}>{children}</div>
 }

@@ -65,6 +65,20 @@ describe.each([
   })
 })
 
+describe.each([
+  ['OpenLDAP', openldap],
+  ['389-DS', ds389],
+])('SchemaModel DN attributes on %s', (_label, schema) => {
+  it('knows the attributes whose values are DNs, including inherited syntaxes', () => {
+    for (const name of ['member', 'uniqueMember', 'manager', 'owner', 'seeAlso', 'secretary']) {
+      expect(schema.isDistinguishedName(name), name).toBe(true)
+    }
+    for (const name of ['cn', 'mail', 'description', 'jpegPhoto']) {
+      expect(schema.isDistinguishedName(name), name).toBe(false)
+    }
+  })
+})
+
 describe('SchemaModel equality matching', () => {
   it('knows which attributes can be changed value by value', () => {
     expect(openldap.hasEqualityMatching('mail')).toBe(true)
@@ -105,6 +119,13 @@ describe('SchemaModel on the Active Directory sample', () => {
 })
 
 describe('SchemaModel without a schema', () => {
+  it('falls back to well-known DN attributes', () => {
+    const none = new SchemaModel({ attributeTypes: [], objectClasses: [], syntaxes: [] })
+    expect(none.isDistinguishedName('member')).toBe(true)
+    expect(none.isDistinguishedName('Manager')).toBe(true)
+    expect(none.isDistinguishedName('description')).toBe(false)
+  })
+
   const empty = new SchemaModel({ attributeTypes: [], objectClasses: [], syntaxes: [] })
 
   it('still knows the well-known binary attributes and the ;binary option', () => {

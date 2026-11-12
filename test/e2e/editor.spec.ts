@@ -128,6 +128,24 @@ test.describe('viewing an entry (task 10.1)', () => {
     ])
   })
 
+  test('scrolls the object class tags sideways when they do not fit', async () => {
+    await page.setViewportSize({ width: 820, height: 700 })
+    await open('uid=jdoe,ou=people,dc=example,dc=com')
+    const tags = editor().getByRole('list', { name: 'Object classes' })
+    await expect(tags).toHaveAttribute('data-overflowing', 'true')
+    const size = () =>
+      tags.evaluate((element) => ({
+        scrollLeft: element.scrollLeft,
+        height: element.getBoundingClientRect().height,
+      }))
+    // One row, no scrollbar: the height stays that of a tag.
+    expect((await size()).height).toBe(20)
+    await tags.hover()
+    await page.mouse.wheel(0, 200)
+    await expect.poll(async () => (await size()).scrollLeft).toBeGreaterThan(0)
+    await expect(tags.getByRole('listitem').last()).toBeInViewport()
+  })
+
   test('copies the DN from the path bar', async () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
     await editor().getByRole('button', { name: 'Copy DN' }).click()
@@ -221,6 +239,8 @@ test.describe('editing values (task 10.2)', () => {
     // ...but dragging the list's scrollbar does not.
     await addButton.click()
     const scroller = page.getByRole('listbox', { name: 'Attribute to add' }).locator('ul')
+    // Hovering waits until the popover has stopped moving, so the measured box is final.
+    await scroller.hover()
     const box = (await scroller.boundingBox())!
     await page.mouse.move(box.x + box.width - 3, box.y + 8)
     await page.mouse.down()
@@ -236,6 +256,70 @@ test.describe('editing values (task 10.2)', () => {
     await field.press('Escape')
     await expect(field).toHaveCount(0)
     await expect(editor()).not.toContainText('unsaved')
+  })
+})
+
+test.describe('choosing DN values (entry-editing spec)', () => {
+  test('picks a member from the directory, starting at the current value', async () => {
+    const group = `cn=Team,${container}`
+    await admin.add(group, {
+      objectClass: ['top', 'groupOfNames'],
+      cn: 'Team',
+      member: 'uid=jdoe,ou=people,dc=example,dc=com',
+    })
+    try {
+      await open(group)
+      const member = attribute('member')
+      await member.hover()
+      // Only DN-valued attributes offer it.
+      await expect(attribute('cn').getByRole('button', { name: /from the directory/ })).toHaveCount(0)
+      await member.getByRole('button', { name: 'Choose member value from the directory' }).click()
+
+      const dialog = page.getByRole('dialog', { name: 'Choose member' })
+      const entries = dialog.getByRole('tree', { name: 'Entries to choose from' })
+      // Opened at the current value, with the entries down to it loaded.
+      await expect(entries.getByRole('treeitem', { name: 'uid=jdoe', exact: true })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      await entries.getByRole('treeitem', { name: 'uid=asmith', exact: true }).click()
+      await expect(dialog).toContainText('uid=asmith,ou=people,dc=example,dc=com')
+      await dialog.getByRole('button', { name: 'Choose' }).click()
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+      await expect(valueInputs('member')).toHaveValue('uid=asmith,ou=people,dc=example,dc=com')
+      await expect(member.getByRole('img', { name: 'Changed' })).toBeVisible()
+
+      // Double-click chooses too; Cancel changes nothing.
+      await member.hover()
+      await member.getByRole('button', { name: 'Choose member value from the directory' }).click()
+      await entries.getByRole('treeitem', { name: 'uid=bwayne', exact: true }).dblclick()
+      await expect(valueInputs('member')).toHaveValue('uid=bwayne,ou=people,dc=example,dc=com')
+      await member.hover()
+      await member.getByRole('button', { name: 'Choose member value from the directory' }).click()
+      await dialog.getByRole('button', { name: 'Cancel' }).click()
+      await expect(valueInputs('member')).toHaveValue('uid=bwayne,ou=people,dc=example,dc=com')
+    } finally {
+      await admin.del(group).catch(() => undefined)
+    }
+  })
+
+  test('opens the chooser for a new, empty value at the top of the directory', async () => {
+    await open(entryDn)
+    await editor().getByRole('button', { name: 'Add attribute' }).click()
+    await editor().getByLabel('Attribute to add').fill('seeAlso')
+    await editor().getByLabel('Attribute to add').press('Enter')
+    await expect(valueInputs('seeAlso')).toBeFocused()
+    await attribute('seeAlso').hover()
+    await attribute('seeAlso')
+      .getByRole('button', { name: 'Choose seeAlso value from the directory' })
+      .click()
+    const entries = page
+      .getByRole('dialog', { name: 'Choose seeAlso' })
+      .getByRole('tree', { name: 'Entries to choose from' })
+    await expect(entries.getByRole('treeitem', { name: 'dc=example,dc=com', exact: true })).toBeVisible()
+    // The first root is opened, so there is something to pick right away.
+    await entries.getByRole('treeitem', { name: 'ou=people', exact: true }).dblclick()
+    await expect(valueInputs('seeAlso')).toHaveValue('ou=people,dc=example,dc=com')
   })
 })
 

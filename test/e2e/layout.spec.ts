@@ -39,9 +39,9 @@ test('pane sizes, the collapsed bottom panel and the window bounds persist acros
 
   // Drag the divider between the sidebar and the main area 120 px to the right.
   const sidebar = (await window.getByTestId('sidebar').boundingBox())!
-  await window.mouse.move(sidebar.x + sidebar.width, sidebar.y + 200)
+  await window.mouse.move(sidebar.x + sidebar.width + 3, sidebar.y + 200)
   await window.mouse.down()
-  await window.mouse.move(sidebar.x + sidebar.width + 120, sidebar.y + 200, { steps: 8 })
+  await window.mouse.move(sidebar.x + sidebar.width + 3 + 120, sidebar.y + 200, { steps: 8 })
   await window.mouse.up()
   const sidebarAfter = await width(window, 'sidebar')
   expect(Math.abs(sidebarAfter - (sidebarBefore + 120))).toBeLessThanOrEqual(2)
@@ -59,10 +59,11 @@ test('pane sizes, the collapsed bottom panel and the window bounds persist acros
   window = launched.window
   await expect(window.getByRole('button', { name: 'Expand panel' })).toBeVisible()
   expect(Math.abs((await width(window, 'sidebar')) - sidebarAfter)).toBeLessThanOrEqual(2)
-  // Still collapsed to its tab bar, and the editor fills the rest of the main area.
-  expect(Math.abs((await height(window, 'bottom')) - 36)).toBeLessThanOrEqual(1)
+  // Still collapsed to its tab bar (36 px plus the pane's 2 px of border), and the editor fills
+  // the rest of the main area beside the 6 px gap.
+  expect(Math.abs((await height(window, 'bottom')) - 38)).toBeLessThanOrEqual(1)
   const content = await height(window, 'content-layout')
-  expect(Math.abs((await height(window, 'editor')) + 36 + 1 - content)).toBeLessThanOrEqual(2)
+  expect(Math.abs((await height(window, 'editor')) + 38 + 6 - content)).toBeLessThanOrEqual(2)
   const bounds = await launched.app.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()[0]?.getBounds(),
   )

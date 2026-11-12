@@ -5,6 +5,7 @@ import { Button } from '@renderer/components/ui/button'
 import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Dialog } from '@renderer/components/ui/dialog'
 import { DropdownMenu } from '@renderer/components/ui/dropdown-menu'
+import { HorizontalScroller } from '@renderer/components/HorizontalScroller'
 import { IconButton } from '@renderer/components/IconButton'
 import { cn } from '@renderer/lib/utils'
 import { useEntryActions, type EntryAction } from '@renderer/state/actions'
@@ -238,6 +239,7 @@ export function EditorPane(): React.JSX.Element {
 
       <div className="min-h-0 flex-1 overflow-y-auto border-t">
         <AttributeTable
+          connectionId={entry.connectionId}
           original={entry.original}
           working={entry.working}
           schema={schema.model}
@@ -463,19 +465,19 @@ function ObjectClassTags({
     return null
   }
   return (
-    <ul aria-label="Object classes" className="flex min-w-0 gap-1 overflow-hidden">
+    <HorizontalScroller label="Object classes" className="gap-1">
       {shown.map(({ name, kind }) => (
         <li
           key={name}
           title={kind ? `${kind[0]?.toUpperCase()}${kind.slice(1)} object class` : 'Object class'}
           className={cn(
-            'h-5 rounded-sm border px-1.5 text-[0.6875rem] leading-[1.125rem]',
+            'h-5 shrink-0 rounded-sm border px-1.5 text-[0.6875rem] leading-[1.125rem] whitespace-nowrap',
             kind === 'structural' ? 'border-border-strong text-foreground' : 'text-muted-foreground',
           )}
         >
           {name}
         </li>
       ))}
-    </ul>
+    </HorizontalScroller>
   )
 }

@@ -101,6 +101,7 @@ Each scenario in `openspec/changes/ldap-studio-mvp/specs` and the test or checkl
 | Replace photo                            | e2e/binary › replaces a value from a file and the server stores exactly its bytes                                                   |
 | Save certificate to file                 | e2e/binary › saves a certificate to a file with exactly the stored bytes                                                            |
 | Copy a value                             | e2e/editor › copies a value and all values of an attribute                                                                          |
+| Choose a group member                    | e2e/editor › picks a member from the directory, starting at the current value; unit/schema model › DN attributes                    |
 
 ## Schema model
 
