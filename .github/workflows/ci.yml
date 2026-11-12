@@ -1,0 +1,103 @@
+# Checks, the test servers with integration and end-to-end tests (task 14.2), and the installers
+# for each platform, each installed and launched on a runner without Java (task 14.1).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec install-electron
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Start the test servers
+        run: pnpm test:env:up
+      - run: pnpm test:env:check
+      - run: pnpm test:integration
+      # Ubuntu 24.04 blocks the unprivileged user namespaces Chromium's sandbox needs.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: End-to-end tests, including the smoke test
+        run: xvfb-run -a pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: test-results/
+      - if: always()
+        run: pnpm test:env:down
+
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            build: --mac dmg --arm64
+          - os: windows-2025
+            build: --win nsis --x64
+          - os: ubuntu-24.04
+            build: --linux AppImage deb --x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec electron-builder ${{ matrix.build }} --publish never
+      - name: Install from the DMG and launch (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mount=$(mktemp -d)
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount" dist/*.dmg
+          ditto "$mount/LDAP Studio.app" "$RUNNER_TEMP/LDAP Studio.app"
+          hdiutil detach "$mount"
+          command -v java || echo "java: none"
+          node test/package/launch.mjs "$RUNNER_TEMP/LDAP Studio.app/Contents/MacOS/LDAP Studio"
+      - name: Install with the NSIS installer and launch (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist -Filter '*-Setup-*-x64.exe' | Select-Object -First 1
+          Start-Process -Wait -FilePath $installer.FullName -ArgumentList '/S'
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'LDAP Studio.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'LDAP Studio.exe was not installed' }
+          if (Get-Command java -ErrorAction SilentlyContinue) { 'java: present' } else { 'java: none' }
+          node test/package/launch.mjs $exe.FullName
+      - name: Install the deb, run the AppImage, and launch both (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          sudo apt-get update
+          sudo apt-get install -y xvfb ./dist/*.deb
+          xvfb-run -a node test/package/launch.mjs "/opt/LDAP Studio/ldap-studio"
+          chmod +x dist/*.AppImage
+          APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a node test/package/launch.mjs "$(ls dist/*.AppImage)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ runner.os }}
+          path: |
+            dist/*.dmg
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb

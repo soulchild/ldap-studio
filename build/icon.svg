@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- macOS grid: an 824 px tile centred on the 1024 px canvas. -->
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="#3D5CCC"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M372 330 V694 M372 512 H560 M372 694 H560"/>
+  </g>
+  <g fill="#FFFFFF">
+    <rect x="292" y="250" width="160" height="160" rx="36"/>
+    <rect x="560" y="452" width="200" height="120" rx="36"/>
+    <rect x="560" y="634" width="200" height="120" rx="36"/>
+  </g>
+</svg>

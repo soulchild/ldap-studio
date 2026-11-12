@@ -1,0 +1,14 @@
+node_modules/
+out/
+dist/
+coverage/
+*.log
+.DS_Store
+scratchpad/
+.pnpm-store/
+*.tsbuildinfo
+test/ldap/certs/
+.corral.local.yml
+test-results/
+playwright-report/
+.claude/settings.local.json
