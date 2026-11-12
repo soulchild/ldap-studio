@@ -20,7 +20,7 @@ Electron downloads its binary the first time it starts (for example on the first
 pnpm exec install-electron
 ```
 
-On macOS, `pnpm dev` and `pnpm preview` start the app from a renamed copy of Electron's app bundle in `.dev-app/`, so the menu bar and Dock say "LDAP Studio" instead of "Electron". The installed Electron package is left untouched.
+On macOS, `pnpm dev` and `pnpm preview` start the app from a renamed copy of Electron's app bundle in `.dev-app/`, so the menu bar, Dock and About panel show "LDAP Studio" and its icon instead of Electron's. The copy is rebuilt when Electron or `build/icon.png` changes. The installed Electron package is left untouched.
 
 ## Commands
 
