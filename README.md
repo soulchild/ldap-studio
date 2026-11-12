@@ -45,7 +45,11 @@ On macOS, `pnpm dev` and `pnpm preview` start the app from a renamed copy of Ele
 
 ## Installers
 
-`electron-builder.yml` configures the installers. They are unsigned, so on first launch macOS Gatekeeper asks for confirmation (right-click the app and choose Open) and Windows SmartScreen shows a warning. Windows and Linux installers can be built on a Mac.
+`electron-builder.yml` configures the installers. They are not signed with a developer certificate. Windows SmartScreen shows a warning on first launch.
+
+On macOS the app is signed ad hoc (no Apple Developer account needed), so macOS treats a downloaded copy as coming from an unidentified developer. The first time you open it, macOS says it cannot verify the app; choose Done, then open System Settings → Privacy & Security and click Open Anyway next to the message about LDAP Studio. Alternatively, remove the download flag in a terminal: `xattr -dr com.apple.quarantine "/Applications/LDAP Studio.app"`. Builds you make yourself with `pnpm dist:mac` are not flagged and open directly. Opening without any warning would need a Developer ID certificate and notarization (Apple Developer Program).
+
+Windows and Linux installers can be built on a Mac.
 
 To check a build, `node test/package/launch.mjs <executable>` launches it and waits for the workspace. `sh test/package/linux-check.sh [arm64|amd64]` installs the Linux packages in a clean Debian container and launches them. Chromium does not run under Docker's x86 emulation, so on Apple Silicon only `arm64` works. CI (`.github/workflows/ci.yml`) builds and launches the installers on macOS, Windows and Linux runners.
 
