@@ -91,6 +91,10 @@ test('screenshot', async () => {
     await table.getByRole('rowgroup', { name: 'createTimestamp' }).scrollIntoViewIfNeeded()
     await page.screenshot({ path: 'scratchpad/operational-dark.png' })
     await page.getByLabel('Show operational attributes').uncheck()
+    await page.getByRole('button', { name: 'Add attribute' }).click()
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'scratchpad/add-attribute-dark.png' })
+    await page.keyboard.press('Escape')
   }
   await page.keyboard.press('ControlOrMeta+/')
   await page.waitForTimeout(300)
