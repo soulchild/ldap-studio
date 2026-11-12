@@ -82,6 +82,11 @@ export function SearchPanel(): React.JSX.Element {
     }
   }
 
+  // A search needs a server; until then the form has nothing to work with.
+  if (!active) {
+    return <EmptyState>Connect to a server to search its directory.</EmptyState>
+  }
+
   return (
     <div className="flex h-full flex-col">
       <form

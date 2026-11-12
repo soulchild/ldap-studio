@@ -29,6 +29,11 @@ test('shows the directory above the connections, the editor and the bottom panel
   expect(directory!.y).toBeLessThan(connections!.y)
   expect(directory!.x).toBeLessThan(editor!.x)
   expect(editor!.y).toBeLessThan(bottom!.y)
+  // Nothing to search before connecting: a hint instead of the form.
+  await expect(window.getByRole('form', { name: 'Search' })).toHaveCount(0)
+  await expect(window.getByRole('region', { name: 'Search and log' })).toContainText(
+    'Connect to a server to search its directory.',
+  )
   await launched.close()
 })
 
