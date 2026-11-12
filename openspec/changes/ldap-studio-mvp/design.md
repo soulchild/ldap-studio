@@ -126,10 +126,11 @@ Main wraps every LDAP call in the session to emit a log record (timestamp, profi
 ### 15. Visual direction
 Set by the user: a roomy layout where elements breathe, the system font, a look in the spirit of Linear, no gradients or fake reflections, colour only where it carries meaning, and a distinctive cross-platform look rather than an imitation of macOS.
 - **Colour:** cool neutral greys with a faint blue tint, and one accent (cobalt `#3D5CCC`, `#7C93F0` in dark mode) used only for selection, focus and the primary action. Status colours only where they mean something: green for connected, amber for plain LDAP or incomplete results, red for errors and destructive actions.
-- **Type:** the system UI font at 13 px base, 12 px secondary and 15 px for the entry title, with weights 400/500/600. A monospace font only for attribute values, DNs in the editor and the filter field, never for labels. Labels are sentence case.
+- **Type:** the system UI font at 13 px base, 12 px secondary and 18 px for the entry title, with weights 400/500/600. A monospace font only for attribute values, DNs in the editor and the filter field, never for labels. Labels are sentence case.
 - **Layout:** the left column holds the directory tree on top and the connections list in the lower left (user's choice), the entry editor fills the main area, and the collapsible results/log panel sits below the editor.
-- **Spacing:** an 8 px grid with 32 px rows (about 20 px in Directory Studio), and generous padding in panes.
-- **The one distinctive element:** the entry editor's header shows the DN as a navigable path of RDN segments (attribute type muted, value strong); clicking a segment opens that ancestor. Everything around it stays quiet.
+- **Spacing:** a 4 px grid with 28 px rows in the tree and results (about 20 px in Directory Studio), and padding of 14–20 px in panes. Slightly tightened from 32 px rows after the first review (user's choice).
+- **The one distinctive element:** the entry editor's header. It shows the DN as a navigable path of RDN segments (attribute type muted, value strong; clicking a segment opens that ancestor), then the entry's type in an accent-tinted tile, its name, and its object classes as tags (structural outlined, auxiliary muted). Everything around it stays quiet.
+- **Entry types:** the tree, the header and the search results show an icon for the kind of entry (domain, organization, container, group, person, computer, alias, policy), decided by object class or, where the classes are unknown, by the RDN's attribute type. The icons are grey; only the selected tree row's icon takes the accent.
 - **Surfaces:** flat panes separated by 1 px borders, no cards, no decorative shadows (one subtle shadow on popovers and dialogs only), and modest radii (4 px on controls, 8 px on dialogs).
 
 ## Risks / Trade-offs

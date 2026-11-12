@@ -11,6 +11,8 @@ import { useEditor } from '@renderer/state/editor'
 import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { DEFAULT_SIZE_LIMIT, useSearch, type SearchParams } from '@renderer/state/search'
 import { useTree } from '@renderer/state/tree'
+import { EntryIcon } from '@renderer/tree/EntryIcon'
+import { entryKind, type EntryKind } from '@renderer/tree/entry-kind'
 import { keyOf } from '@renderer/tree/model'
 import { describeBinary } from '@shared/binary'
 import { isDescendantOf, parseDn } from '@shared/dn'
@@ -18,7 +20,7 @@ import type { SearchEntry, SearchScope } from '@shared/ipc'
 import { attributeListSuggestions, filterDiagnostics, filterSuggestions } from './assist'
 import { CodeField } from './CodeField'
 
-const ROW_HEIGHT = 32
+const ROW_HEIGHT = 28
 const count = new Intl.NumberFormat()
 const SCOPES: { value: SearchScope; label: string }[] = [
   { value: 'base', label: 'Base entry' },
@@ -83,7 +85,7 @@ export function SearchPanel(): React.JSX.Element {
   return (
     <div className="flex h-full flex-col">
       <form
-        className="flex shrink-0 flex-col gap-2 border-b px-4 py-3"
+        className="flex shrink-0 flex-col gap-2 border-b px-3.5 py-2.5"
         aria-label="Search"
         onSubmit={(event) => {
           event.preventDefault()
@@ -269,7 +271,7 @@ function Status(): React.JSX.Element | null {
   return (
     <p
       role={status.state === 'error' ? 'alert' : 'status'}
-      className={cn('shrink-0 px-4 py-2 text-xs', tone)}
+      className={cn('shrink-0 px-3.5 py-1.5 text-xs', tone)}
     >
       {text}
     </p>
@@ -283,6 +285,13 @@ function cellText(entry: SearchEntry, column: string): string {
   return (attribute?.values ?? [])
     .map((value) => (typeof value === 'string' ? value : describeBinary(column, value)))
     .join(', ')
+}
+
+/** By the returned object classes when requested, otherwise by the RDN's attribute type. */
+function resultKind(entry: SearchEntry): EntryKind {
+  const classes = cellText(entry, 'objectClass').split(', ').filter(Boolean)
+  const comma = entry.dn.indexOf(',')
+  return entryKind(classes, comma < 0 ? entry.dn : entry.dn.slice(0, comma))
 }
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
@@ -368,7 +377,7 @@ function ResultsTable(): React.JSX.Element {
     >
       <div
         role="row"
-        className="grid shrink-0 gap-4 border-y px-4 py-2 text-xs font-medium text-muted-foreground"
+        className="grid shrink-0 gap-4 border-y bg-background px-3.5 py-1.5 text-xs font-medium text-muted-foreground"
         style={template}
       >
         {header('dn', 'DN')}
@@ -409,11 +418,12 @@ function ResultsTable(): React.JSX.Element {
                       void openResult(connectionId, entry.dn)
                     }
                   }}
-                  className="absolute inset-x-0 grid items-center gap-4 px-4 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
+                  className="absolute inset-x-0 grid items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
                   style={{ ...template, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                 >
-                  <span role="cell" className="truncate font-mono" title={entry.dn}>
-                    {entry.dn}
+                  <span role="cell" className="flex min-w-0 items-center gap-2" title={entry.dn}>
+                    <EntryIcon kind={resultKind(entry)} className="text-subtle-foreground" />
+                    <span className="truncate font-mono">{entry.dn}</span>
                   </span>
                   {columns.map((column) => {
                     const text = cellText(entry, column)
