@@ -78,10 +78,10 @@ export function AttributeTable({
             key={attribute.name}
             role="rowgroup"
             aria-label={attribute.name}
-            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 px-6 py-1.5 last:border-b-0"
+            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 px-5 py-1 last:border-b-0"
           >
             <div className="flex min-w-0 flex-col pt-1.5">
-              <span className="flex items-center gap-1.5 text-sm">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <span className="truncate" title={attribute.name}>
                   {attribute.name}
                 </span>
@@ -228,7 +228,7 @@ export function AttributeTable({
           <div
             key={name}
             role="alert"
-            className="flex items-center gap-3 border-b border-border/70 px-6 py-2.5 text-sm text-destructive"
+            className="flex items-center gap-3 border-b border-border/70 px-5 py-2 text-sm text-destructive"
           >
             <span className="min-w-0 flex-1">{message}</span>
             {!readOnly ? (
@@ -293,7 +293,7 @@ function ValueField({
   }
   if (locked) {
     return (
-      <span className="selectable flex min-h-8 min-w-0 flex-1 items-center px-2.5 font-mono text-sm break-all">
+      <span className="selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm break-all">
         {value}
       </span>
     )
@@ -307,7 +307,7 @@ function ValueField({
       spellCheck={false}
       onChange={(event) => onChange(event.target.value)}
       className={cn(
-        'h-8 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
+        'h-7 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
         'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
       )}
     />
@@ -325,7 +325,7 @@ function AddAttribute({
   const [name, setName] = useState('')
   if (!open) {
     return (
-      <div className="px-6 py-3">
+      <div className="px-5 py-2.5">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -346,7 +346,7 @@ function AddAttribute({
   }
   return (
     <form
-      className="flex items-center gap-2 px-6 py-3"
+      className="flex items-center gap-2 px-5 py-2.5"
       onSubmit={(event) => {
         event.preventDefault()
         submit()

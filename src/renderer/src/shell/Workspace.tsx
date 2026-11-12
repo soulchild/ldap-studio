@@ -135,7 +135,7 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
         <ResizeHandle orientation="horizontal" />
         <Panel id="content" minSize={400}>
           <div className="flex h-full flex-col">
-            <div className="flex h-12 shrink-0 items-center gap-3 border-b bg-surface px-4">
+            <div className="flex h-11 shrink-0 items-center gap-3 border-b bg-surface px-3.5">
               <DnLookup />
               <button
                 type="button"

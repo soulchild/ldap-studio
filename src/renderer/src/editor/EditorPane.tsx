@@ -6,16 +6,20 @@ import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Dialog } from '@renderer/components/ui/dialog'
 import { DropdownMenu } from '@renderer/components/ui/dropdown-menu'
 import { IconButton } from '@renderer/components/IconButton'
+import { cn } from '@renderer/lib/utils'
 import { useEntryActions, type EntryAction } from '@renderer/state/actions'
 import { useConnections } from '@renderer/state/connections'
 import { useEditor } from '@renderer/state/editor'
 import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { useTree } from '@renderer/state/tree'
 import { SHORTCUTS, shortcutText, useShortcut } from '@renderer/shell/shortcuts'
+import { EntryIcon } from '@renderer/tree/EntryIcon'
+import { entryKind, KIND_LABELS } from '@renderer/tree/entry-kind'
 import { keyOf } from '@renderer/tree/model'
 import { describeBinary } from '@shared/binary'
-import { parseDn } from '@shared/dn'
+import { parseDn, serializeRdn } from '@shared/dn'
 import type { Modification } from '@shared/entry'
+import type { SchemaModel } from '@shared/schema-model'
 import { AttributeTable } from './AttributeTable'
 import { changedAttributeCount } from './model'
 import { DnPath } from './DnPath'
@@ -117,6 +121,12 @@ export function EditorPane(): React.JSX.Element {
         const parsed = parseDn(entry.dn)
         return parsed.ok ? (parsed.dn[0]?.[0]?.value ?? entry.dn) : entry.dn
       })()
+  const objectClasses = (
+    entry.working.find((attribute) => attribute.name.toLowerCase() === 'objectclass')?.values ?? []
+  ).filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+  const hasTags = objectClasses.some((name) => name.toLowerCase() !== 'top')
+  const parsedDn = parseDn(entry.dn)
+  const kind = entryKind(objectClasses, parsedDn.ok && parsedDn.dn[0] ? serializeRdn(parsedDn.dn[0]) : '')
   const act = (kind: EntryAction) =>
     useEntryActions.getState().start({ kind, connectionId: entry.connectionId, dn: entry.dn })
   const openAncestor = (dn: string) => {
@@ -125,10 +135,36 @@ export function EditorPane(): React.JSX.Element {
 
   return (
     <section className="flex h-full flex-col" aria-label="Entry">
-      <header className="flex shrink-0 flex-col gap-2 px-6 pt-5 pb-4">
+      <header className="flex shrink-0 flex-col gap-3 px-5 pt-3.5 pb-3">
         <DnPath dn={entry.dn} rootDns={rootDns} onOpen={openAncestor} />
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="selectable min-w-0 truncate text-lg font-semibold">{title}</h1>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            {/* The tile's top meets the top of the name's capitals and its bottom the tags' bottom. */}
+            <span
+              className={cn(
+                'flex shrink-0 items-center justify-center rounded-md bg-selection text-primary',
+                hasTags ? 'size-12' : 'size-9',
+              )}
+              role="img"
+              aria-label={KIND_LABELS[kind]}
+              title={KIND_LABELS[kind]}
+            >
+              <EntryIcon kind={kind} className={hasTags ? 'size-5' : 'size-[18px]'} />
+            </span>
+            <div className={cn('flex min-w-0 flex-col', hasTags ? 'h-12 justify-between' : 'justify-center')}>
+              {/* Trimmed to cap height so the letters, not the line box, touch the top. Clipped
+                  horizontally only, so accents above the capitals (Ä, Ö) stay visible. */}
+              <h1
+                className={cn(
+                  'selectable overflow-x-clip text-xl font-semibold tracking-tight text-ellipsis whitespace-nowrap',
+                  hasTags && '[text-box:trim-start_cap_alphabetic]',
+                )}
+              >
+                {title}
+              </h1>
+              <ObjectClassTags classes={objectClasses} schema={schema.model} />
+            </div>
+          </div>
           {draft ? null : (
             <div className="flex shrink-0 items-center gap-2">
               <Checkbox
@@ -180,7 +216,7 @@ export function EditorPane(): React.JSX.Element {
       </div>
 
       {pending.length > 0 || editor.saveError || draft ? (
-        <footer className="flex shrink-0 items-center gap-3 border-t bg-background px-6 py-3">
+        <footer className="flex shrink-0 items-center gap-3 border-t bg-background px-5 py-2.5">
           <div className="min-w-0 flex-1 text-sm">
             {editor.saveError ? (
               <p role="alert" className="text-destructive">
@@ -376,4 +412,38 @@ function GuardDialog({
 
 function unsavedLabel(count: number): string {
   return count === 1 ? '1 unsaved change' : `${count} unsaved changes`
+}
+
+/** The entry's object classes, structural first; `top` says nothing and is left out. */
+function ObjectClassTags({
+  classes,
+  schema,
+}: {
+  classes: string[]
+  schema: SchemaModel
+}): React.JSX.Element | null {
+  const order = { structural: 0, abstract: 1, auxiliary: 2 }
+  const shown = classes
+    .filter((name) => name.toLowerCase() !== 'top')
+    .map((name) => ({ name, kind: schema.objectClass(name)?.kind }))
+    .sort((a, b) => order[a.kind ?? 'auxiliary'] - order[b.kind ?? 'auxiliary'])
+  if (shown.length === 0) {
+    return null
+  }
+  return (
+    <ul aria-label="Object classes" className="flex min-w-0 gap-1 overflow-hidden">
+      {shown.map(({ name, kind }) => (
+        <li
+          key={name}
+          title={kind ? `${kind[0]?.toUpperCase()}${kind.slice(1)} object class` : 'Object class'}
+          className={cn(
+            'h-5 rounded-sm border px-1.5 text-[0.6875rem] leading-[1.125rem]',
+            kind === 'structural' ? 'border-border-strong text-foreground' : 'text-muted-foreground',
+          )}
+        >
+          {name}
+        </li>
+      ))}
+    </ul>
+  )
 }

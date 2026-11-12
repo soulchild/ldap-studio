@@ -53,7 +53,7 @@ export function ConnectionsPane(): React.JSX.Element {
             No connections yet.
           </EmptyState>
         ) : (
-          <ul aria-label="Connection profiles" className="flex flex-col px-2 pb-2">
+          <ul aria-label="Connection profiles" className="flex flex-col gap-px px-1.5 pb-1.5">
             {profiles.map((profile) => (
               <ProfileRow
                 key={profile.id}
@@ -133,7 +133,7 @@ function ProfileRow({
       aria-current={active ? 'true' : undefined}
       data-status={state.status}
       className={cn(
-        'group flex items-center gap-3 rounded-sm px-2 py-1.5',
+        'group flex items-center gap-2.5 rounded-sm px-2 py-1',
         active ? 'bg-selection' : 'hover:bg-hover',
       )}
       onClick={() => setActive(profile.id)}

@@ -33,7 +33,7 @@ export function Dialog({
           )}
           {...(description ? {} : { 'aria-describedby': undefined })}
         >
-          <div className="px-6 pt-5 pb-1">
+          <div className="px-5 pt-4 pb-1">
             <Primitive.Title className="text-lg font-semibold">{title}</Primitive.Title>
             {description ? (
               <Primitive.Description className="mt-1 text-sm text-muted-foreground">
@@ -41,9 +41,9 @@ export function Dialog({
               </Primitive.Description>
             ) : null}
           </div>
-          {children ? <div className="min-h-0 overflow-y-auto px-6 py-4">{children}</div> : null}
+          {children ? <div className="min-h-0 overflow-y-auto px-5 py-3.5">{children}</div> : null}
           {footer ? (
-            <div className="flex items-center justify-end gap-2 border-t px-6 py-4">{footer}</div>
+            <div className="flex items-center justify-end gap-2 border-t px-5 py-3">{footer}</div>
           ) : null}
         </Primitive.Content>
       </Primitive.Portal>

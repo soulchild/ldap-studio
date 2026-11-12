@@ -4,12 +4,14 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { isWithin } from '@renderer/actions/helpers'
 import { ContextMenu } from '@renderer/components/ui/context-menu'
 import { cn } from '@renderer/lib/utils'
+import { EntryIcon } from './EntryIcon'
+import { entryKind } from './entry-kind'
 import { escapeDnValue, parseDn } from '@shared/dn'
 import { useEntryActions, type EntryAction } from '@renderer/state/actions'
 import { useTree } from '@renderer/state/tree'
 import { flatten, isExpandable, type Tree, type TreeNode, type TreeRow } from './model'
 
-const ROW_HEIGHT = 32
+const ROW_HEIGHT = 28
 const INDENT = 16
 const count = new Intl.NumberFormat()
 
@@ -334,7 +336,7 @@ function NodeRow({
       onClick={onSelect}
       onDoubleClick={() => expandable && onToggle()}
       className={cn(
-        'flex h-full items-center gap-1.5 rounded-sm pr-2 text-sm',
+        'flex h-full items-center gap-1 rounded-sm pr-2 text-sm',
         selected ? 'bg-selection-strong' : 'hover:bg-hover',
       )}
       style={style}
@@ -356,6 +358,10 @@ function NodeRow({
       ) : (
         <span className="size-5 shrink-0" />
       )}
+      <EntryIcon
+        kind={entryKind(node.objectClasses, node.rdn)}
+        className={selected ? 'text-primary' : 'text-subtle-foreground'}
+      />
       <span className={cn('min-w-0 flex-1 truncate', node.depth === 0 && 'font-medium')}>
         <RdnLabel rdn={node.rdn} />
       </span>
@@ -387,7 +393,8 @@ function StatusRow({
   onCloseFilter: () => void
 }): React.JSX.Element {
   const loaded = count.format(node.childKeys?.length ?? 0)
-  const textStyle = { ...style, paddingLeft: Number(style.paddingLeft) + 26 }
+  // Lines up with the names of child rows: chevron (20) + gap (4) + icon (14) + gap (4).
+  const textStyle = { ...style, paddingLeft: Number(style.paddingLeft) + 42 }
   const link = 'rounded-sm px-1 font-medium text-foreground hover:bg-hover'
   switch (row.kind) {
     case 'filter':

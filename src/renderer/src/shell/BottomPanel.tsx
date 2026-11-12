@@ -29,7 +29,7 @@ export function BottomPanel({
         className="flex shrink-0 items-center justify-between gap-2 border-b px-3"
         style={{ height: BOTTOM_BAR_HEIGHT }}
       >
-        <div role="tablist" aria-label="Bottom panel" className="flex items-center gap-1">
+        <div role="tablist" aria-label="Bottom panel" className="flex h-full items-stretch gap-1">
           {TABS.map((item) => (
             <button
               key={item.id}
@@ -40,10 +40,10 @@ export function BottomPanel({
               aria-controls="bottom-tabpanel"
               onClick={() => onTabChange(item.id)}
               className={cn(
-                'rounded-sm px-2.5 py-1 text-xs font-medium transition-colors',
+                'relative h-full px-2.5 text-xs font-medium transition-colors',
                 tab === item.id && !collapsed
-                  ? 'bg-selection text-foreground'
-                  : 'text-muted-foreground hover:bg-hover hover:text-foreground',
+                  ? 'text-foreground after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {item.label}
