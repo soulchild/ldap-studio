@@ -1,7 +1,8 @@
-import { Asterisk, Copy, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
+import { Asterisk, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
+import { CopyButton } from '@renderer/components/CopyButton'
 import { cn } from '@renderer/lib/utils'
 import type { AttributeValue } from '@shared/entry'
 import type { SchemaModel } from '@shared/schema-model'
@@ -22,10 +23,6 @@ import { suggestedFileName } from './file-names'
 
 const actionButton =
   'flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover hover:text-foreground'
-
-function copy(text: string): void {
-  void window.api.invoke('clipboard.writeText', { text })
-}
 
 /** Asks main to show a file dialog and read the chosen file; undefined if cancelled. */
 async function chooseFile(): Promise<Uint8Array<ArrayBuffer> | undefined> {
@@ -125,7 +122,7 @@ export function AttributeTable({
                   />
                 ) : null}
                 {/* On the name line, so the hidden actions take no extra height. */}
-                <span className="-my-1 ml-auto flex shrink-0 opacity-0 transition-opacity group-hover/attribute:opacity-100 group-focus-within/attribute:opacity-100">
+                <span className="-my-1 ml-auto flex shrink-0 opacity-0 transition-opacity group-hover/attribute:opacity-100 group-focus-within/attribute:opacity-100 has-data-copied:opacity-100">
                   {!locked && !singleValued ? (
                     <button
                       type="button"
@@ -149,15 +146,11 @@ export function AttributeTable({
                   ) : null}
                   {attribute.values.length > 1 &&
                   attribute.values.every((value) => typeof value === 'string') ? (
-                    <button
-                      type="button"
-                      className={cn(actionButton, 'size-6')}
-                      aria-label={`Copy all ${attribute.name} values`}
-                      title="Copy all values"
-                      onClick={() => copy(attribute.values.join('\n'))}
-                    >
-                      <Copy className="size-3.5" />
-                    </button>
+                    <CopyButton
+                      label={`Copy all ${attribute.name} values`}
+                      className="size-6"
+                      text={() => attribute.values.join('\n')}
+                    />
                   ) : null}
                 </span>
               </span>
@@ -183,7 +176,7 @@ export function AttributeTable({
                       autoFocus={focusTarget === inputId}
                       onChange={(next) => onChange(setValue(working, attribute.name, index, next))}
                     />
-                    <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100">
+                    <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100">
                       {typeof value === 'string' && dnValued && !locked ? (
                         <button
                           type="button"
@@ -196,15 +189,7 @@ export function AttributeTable({
                         </button>
                       ) : null}
                       {typeof value === 'string' ? (
-                        <button
-                          type="button"
-                          className={actionButton}
-                          aria-label={`Copy ${attribute.name} value`}
-                          title="Copy value"
-                          onClick={() => copy(value)}
-                        >
-                          <Copy className="size-3.5" />
-                        </button>
+                        <CopyButton label={`Copy ${attribute.name} value`} className="size-7" text={value} />
                       ) : (
                         <>
                           <button
