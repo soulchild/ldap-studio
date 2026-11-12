@@ -96,6 +96,15 @@ test('screenshot', async () => {
     await page.screenshot({ path: 'scratchpad/add-attribute-dark.png' })
     await page.keyboard.press('Escape')
   }
+  if (await testServersRunning()) {
+    await page.getByRole('treeitem', { name: 'dc=example,dc=com' }).click()
+    const form = page.getByRole('form', { name: 'Filter the tree' })
+    await form.getByLabel('Filter value').fill('o')
+    await form.getByLabel('Filter value').press('Enter')
+    await page.waitForTimeout(600)
+    await page.screenshot({ path: 'scratchpad/tree-filter-dark.png' })
+    await page.getByRole('button', { name: 'Clear filter' }).click()
+  }
   await page.keyboard.press('ControlOrMeta+/')
   await page.waitForTimeout(300)
   await page.screenshot({ path: 'scratchpad/shortcuts-dark.png' })

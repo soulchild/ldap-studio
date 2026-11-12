@@ -26,9 +26,6 @@ export interface TreeNode {
   /** The list of children is known to be partial. */
   incomplete: boolean
   error: string | undefined
-  /** Text the loaded children are filtered by; '' shows all. */
-  filter: string
-  filterOpen: boolean
 }
 
 export interface Tree {
@@ -38,14 +35,9 @@ export interface Tree {
 
 export type TreeRow =
   | { kind: 'node'; key: string; depth: number }
-  | { kind: 'filter'; key: string; depth: number }
   | { kind: 'loading'; key: string; depth: number }
   | { kind: 'incomplete'; key: string; depth: number }
   | { kind: 'error'; key: string; depth: number }
-  | { kind: 'filtered-out'; key: string; depth: number }
-
-/** Containers with at least this many children get a filter field automatically. */
-export const AUTO_FILTER_THRESHOLD = 200
 
 export function keyOf(dn: string): string {
   try {
@@ -76,8 +68,6 @@ function makeNode(dn: string, parentKey: string | undefined, depth: number, load
     queued: false,
     incomplete: false,
     error: undefined,
-    filter: '',
-    filterOpen: false,
   }
 }
 
@@ -169,7 +159,6 @@ export function finishLoading(tree: Tree, key: string, incomplete: boolean): Tre
       queued: false,
       incomplete,
       hasChildren: childKeys.length > 0 ? true : incomplete ? node.hasChildren : false,
-      filterOpen: node.filterOpen || childKeys.length >= AUTO_FILTER_THRESHOLD,
     }
   })
 }
@@ -180,17 +169,6 @@ export function failLoading(tree: Tree, key: string, message: string): Tree {
 
 export function setExpanded(tree: Tree, key: string, expanded: boolean): Tree {
   return updateNode(tree, key, () => ({ expanded }))
-}
-
-export function setFilter(tree: Tree, key: string, filter: string): Tree {
-  return updateNode(tree, key, () => ({ filter, filterOpen: true }))
-}
-
-export function closeFilter(tree: Tree, key: string): Tree {
-  return updateNode(tree, key, (node) => ({
-    filter: '',
-    filterOpen: (node.childKeys?.length ?? 0) >= AUTO_FILTER_THRESHOLD,
-  }))
 }
 
 export function descendantKeys(tree: Tree, key: string): string[] {
@@ -204,10 +182,6 @@ export function descendantKeys(tree: Tree, key: string): string[] {
   return result
 }
 
-export function matchesFilter(node: TreeNode, filter: string): boolean {
-  return filter === '' || node.rdn.toLowerCase().includes(filter.toLowerCase())
-}
-
 const rowCache = new WeakMap<TreeNode, TreeRow[]>()
 
 /** Rows for a node and its visible descendants. Cached per node object (see updateNode). */
@@ -218,24 +192,13 @@ function subtreeRows(tree: Tree, node: TreeNode): TreeRow[] {
   }
   const rows: TreeRow[] = [{ kind: 'node', key: node.key, depth: node.depth }]
   if (node.expanded) {
-    const depth = node.depth + 1
-    if (node.filterOpen) {
-      rows.push({ kind: 'filter', key: node.key, depth })
-    }
-    const children = node.childKeys ?? []
-    let shown = 0
-    for (const childKey of children) {
+    for (const childKey of node.childKeys ?? []) {
       const child = tree.nodes[childKey]
-      if (child && matchesFilter(child, node.filter)) {
-        shown++
-        for (const row of subtreeRows(tree, child)) {
-          rows.push(row)
-        }
+      if (child) {
+        rows.push(...subtreeRows(tree, child))
       }
     }
-    if (node.filter !== '' && shown === 0 && children.length > 0) {
-      rows.push({ kind: 'filtered-out', key: node.key, depth })
-    }
+    const depth = node.depth + 1
     if (node.loading) {
       rows.push({ kind: 'loading', key: node.key, depth })
     } else if (node.error !== undefined) {

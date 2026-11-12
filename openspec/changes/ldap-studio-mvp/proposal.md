@@ -10,7 +10,7 @@ Apache Directory Studio is the de-facto LDAP GUI, but it requires a Java runtime
 - Connection management: create, edit, delete, and test connection profiles; simple bind (DN + password) over plain LDAP, LDAPS, or StartTLS; custom CA certificates and "trust this certificate" fingerprint pinning. Targets OpenLDAP, 389-DS, and Active Directory (simple bind).
 - Secure credential storage: bind passwords optionally saved per connection, encrypted via the OS keychain (Electron `safeStorage`); weak-storage fallbacks are detected and the user is warned or saving is refused.
 - Schema awareness without a schema UI: the server schema (`cn=subschema`) is loaded per connection and drives attribute autocomplete, required/allowed attributes, single- vs multi-value handling, and binary detection everywhere. Built as a standalone service so a schema browser can be added later.
-- Directory tree: lazy loading of children on expand, streamed in pages via the Paged Results control into a virtualized tree, with live counts, filtering of large nodes, and cancellation.
+- Directory tree: lazy loading of children on expand, streamed in pages via the Paged Results control into a virtualized tree, with live counts, a server-side tree filter (attribute, operator, value; children or whole subtree), and cancellation.
 - DN lookup: a global bar that accepts a DN and jumps to the entry in the tree.
 - Search: raw LDAP filter with syntax validation and schema-based autocomplete; base DN, scope, attribute list, and size limit; virtualized results table that opens entries in the editor; automatic recent-search history.
 - Entry operations: create (schema-guided, pre-filled required attributes), create from copy, inline edit with a reviewable change preview applied as a single modify, rename/move (modify DN, including drag-and-drop), delete and confirmed subtree delete (Tree Delete control when supported, otherwise children-first).
@@ -24,7 +24,7 @@ Out of scope for this change: schema browser UI, SASL/Kerberos/GSSAPI, Virtual L
 
 - `connection-management`: Connection profiles, bind and transport security options (LDAP/LDAPS/StartTLS, CA and certificate trust), connect/disconnect lifecycle, and secure password storage.
 - `schema-model`: Loading, parsing, and caching the server schema per connection and exposing a typed model (object classes, attribute types, syntaxes, single-value and binary flags) to the rest of the application.
-- `directory-tree`: Browsable tree of directory entries with lazy, paged, cancellable child loading, large-node filtering, and DN lookup navigation.
+- `directory-tree`: Browsable tree of directory entries with lazy, paged, cancellable child loading, a tree filter, and DN lookup navigation.
 - `directory-search`: Filter-based search with validation and autocomplete, configurable base/scope/attributes/limits, results table, and recent-search history.
 - `entry-editing`: Viewing and modifying entries: create, create from copy, attribute and value edits with change preview, rename/move, delete and subtree delete, and binary value handling.
 - `app-shell`: Multi-pane application layout, light/dark theming, and the main/renderer process boundary (typed IPC) that all features run through.

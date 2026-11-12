@@ -242,7 +242,7 @@ function CreateDialog({ request, onClose }: DialogProps): React.JSX.Element {
                 id="create-rdn-attribute"
                 value={effectiveRdn}
                 onChange={(event) => setRdnAttribute(event.target.value)}
-                className="h-8 rounded-sm border border-input bg-surface px-2 text-sm"
+                className="h-8 rounded-sm border border-input bg-surface pl-2 text-sm"
               >
                 {rdnOptions.length === 0 ? <option value="">Choose classes first</option> : null}
                 {rdnOptions.map((name) => (

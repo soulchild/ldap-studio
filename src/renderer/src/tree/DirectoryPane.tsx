@@ -2,7 +2,9 @@ import { EmptyState } from '@renderer/components/EmptyState'
 import { PaneHeader } from '@renderer/components/PaneHeader'
 import { useConnections } from '@renderer/state/connections'
 import { useTree } from '@renderer/state/tree'
+import { useTreeFilter } from '@renderer/state/tree-filter'
 import { DirectoryTree } from './DirectoryTree'
+import { FilteredTree, TreeFilterBar, TreeFilterStatus } from './TreeFilter'
 
 /** The tree of the selected connection (directory-tree spec: tree roots, browsing). */
 export function DirectoryPane(): React.JSX.Element {
@@ -20,6 +22,9 @@ export function DirectoryPane(): React.JSX.Element {
         : undefined
   const tree = useTree((store) => (connectionId ? store.trees[connectionId] : undefined))
   const lost = state?.status === 'error' && state.lost === true
+  const filtering = useTreeFilter((store) =>
+    connectionId ? store.applied[connectionId] !== undefined : false,
+  )
 
   return (
     <section className="flex h-full flex-col" aria-label="Directory">
@@ -33,10 +38,20 @@ export function DirectoryPane(): React.JSX.Element {
           reconnect.
         </p>
       ) : null}
+      {connectionId && tree && tree.rootKeys.length > 0 ? (
+        <>
+          <TreeFilterBar connectionId={connectionId} tree={tree} />
+          <TreeFilterStatus connectionId={connectionId} />
+        </>
+      ) : null}
       <div className="min-h-0 flex-1">
         {connectionId && tree ? (
           tree.rootKeys.length > 0 ? (
-            <DirectoryTree connectionId={connectionId} tree={tree} readOnly={lost} />
+            filtering ? (
+              <FilteredTree connectionId={connectionId} tree={tree} />
+            ) : (
+              <DirectoryTree connectionId={connectionId} tree={tree} readOnly={lost} />
+            )
           ) : (
             <EmptyState>
               The server advertises no naming contexts. Set a base DN in the connection settings to browse it.

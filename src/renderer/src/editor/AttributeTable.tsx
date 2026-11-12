@@ -385,6 +385,7 @@ function AddAttribute({
     >
       <Combobox
         label="Attribute to add"
+        autoFocus
         value={name}
         options={options}
         placeholder="Attribute name"

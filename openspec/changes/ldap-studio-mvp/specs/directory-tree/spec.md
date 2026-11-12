@@ -49,12 +49,24 @@ The tree SHALL remain smoothly scrollable and responsive to keyboard navigation 
 - **WHEN** a container with 100,000 loaded children is expanded
 - **THEN** scrolling and moving the selection with arrow keys has no noticeable delay
 
-### Requirement: Filter children of a node
-The user SHALL be able to filter the loaded children of an expanded node by a text that matches anywhere in the RDN, without querying the server again.
+### Requirement: Filter the tree
+The directory pane SHALL offer a filter made of an attribute, an operator (contains, equals, starts with, ends with, exists, greater or equal, less or equal, sounds like) and a value. Applying it SHALL search the server below the selected entry, in its whole subtree or only its children as the user chooses, and SHALL show the matches with the entries leading to them in place of the tree until the filter is cleared. An empty attribute SHALL search the usual naming attributes.
 
-#### Scenario: Filter by text
-- **WHEN** the user types "jdo" into the filter of "ou=people"
-- **THEN** only children whose RDN contains "jdo", ignoring case, are shown
+#### Scenario: Filter by name
+- **WHEN** "dc=example,dc=com" is selected and the user filters for names containing "jdoe" in the whole subtree
+- **THEN** the pane shows "dc=example,dc=com", "ou=people" and "uid=jdoe", with "uid=jdoe" marked as the match
+
+#### Scenario: Entries not loaded yet
+- **WHEN** the user filters for "sn" equals "Bulk 04242" below "dc=example,dc=com" without having expanded "ou=bulk"
+- **THEN** "cn=user04242" is shown below "ou=bulk"
+
+#### Scenario: Only the children
+- **WHEN** the user turns off the whole subtree and filters for "uid" equals "jdoe" below "dc=example,dc=com"
+- **THEN** the pane says that no entries match directly below "dc=example,dc=com"
+
+#### Scenario: Clear the filter
+- **WHEN** the user picks a match and then clears the filter
+- **THEN** the tree returns, opened to the picked entry and with it selected
 
 ### Requirement: Refresh a subtree
 The user SHALL be able to refresh any node, which reloads its children from the server and keeps the expanded state of children that still exist.

@@ -170,7 +170,7 @@ export function SearchPanel(): React.JSX.Element {
               aria-label="Scope"
               value={search.params.scope}
               onChange={(event) => search.setParams({ scope: event.target.value as SearchScope })}
-              className="h-7 rounded-sm border border-input bg-surface px-1.5 text-xs text-foreground"
+              className="h-7 rounded-sm border border-input bg-surface pl-2 text-xs text-foreground"
             >
               {SCOPES.map((scope) => (
                 <option key={scope.value} value={scope.value}>

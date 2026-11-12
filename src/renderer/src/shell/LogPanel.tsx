@@ -75,7 +75,7 @@ export function LogPanel(): React.JSX.Element {
           <select
             value={connection}
             onChange={(event) => setConnection(event.target.value)}
-            className="h-7 rounded-sm border border-input bg-surface px-2 text-xs text-foreground"
+            className="h-7 rounded-sm border border-input bg-surface pl-2 text-xs text-foreground"
           >
             <option value="all">All connections</option>
             {connections.map(([id, name]) => (

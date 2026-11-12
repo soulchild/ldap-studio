@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   appendChildren,
-  AUTO_FILTER_THRESHOLD,
-  closeFilter,
   createTree,
   failLoading,
   finishLoading,
@@ -11,7 +9,6 @@ import {
   keyOf,
   markQueued,
   setExpanded,
-  setFilter,
   startLoading,
   type Tree,
 } from './model'
@@ -112,46 +109,6 @@ describe('tree model', () => {
     expect(tree.nodes[keyOf(`uid=a,ou=people,${ROOT}`)]).toBeUndefined()
   })
 
-  describe('filtering children', () => {
-    function withPeople(): Tree {
-      let tree = expandedRoot()
-      tree = appendChildren(tree, keyOf(ROOT), [
-        node(`uid=jdoe,${ROOT}`),
-        node(`uid=JDOE2,${ROOT}`),
-        node(`uid=asmith,${ROOT}`),
-      ])
-      return finishLoading(tree, keyOf(ROOT), false)
-    }
-
-    it('shows only children whose RDN contains the text, ignoring case', () => {
-      const tree = setFilter(withPeople(), keyOf(ROOT), 'jdo')
-      expect(rows(tree)).toEqual([
-        'node:dc=example,dc=com',
-        '  filter:dc=example,dc=com',
-        '  node:uid=jdoe',
-        '  node:uid=JDOE2',
-      ])
-    })
-
-    it('says so when nothing matches, and shows all again when closed', () => {
-      let tree = setFilter(withPeople(), keyOf(ROOT), 'zzz')
-      expect(rows(tree).at(-1)).toBe('  filtered-out:dc=example,dc=com')
-      tree = closeFilter(tree, keyOf(ROOT))
-      expect(rows(tree)).toHaveLength(4)
-    })
-
-    it(`opens the filter automatically for ${AUTO_FILTER_THRESHOLD} or more children`, () => {
-      let tree = expandedRoot()
-      tree = appendChildren(
-        tree,
-        keyOf(ROOT),
-        Array.from({ length: AUTO_FILTER_THRESHOLD }, (_, i) => node(`cn=u${i},${ROOT}`)),
-      )
-      tree = finishLoading(tree, keyOf(ROOT), false)
-      expect(rows(tree)[1]).toBe('  filter:dc=example,dc=com')
-    })
-  })
-
   describe('incremental flattening', () => {
     it('reuses the rows of untouched subtrees when another node changes', () => {
       let tree = expandedRoot()
@@ -178,7 +135,8 @@ describe('tree model', () => {
       const started = performance.now()
       const result = flatten(tree)
       const elapsed = performance.now() - started
-      expect(result).toHaveLength(100_000 + 2)
+      // The root and its children.
+      expect(result).toHaveLength(100_000 + 1)
       expect(elapsed).toBeLessThan(250)
     })
   })

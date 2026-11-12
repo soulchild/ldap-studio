@@ -57,7 +57,6 @@ test('lists all 5,000 children of a large container, past the server size limit'
   await expect(item('ou=bulk')).toContainText('5,000')
   await expect(item('cn=user00001')).toBeVisible()
   await expect(tree().getByRole('status')).toHaveCount(0)
-  await expect(tree().getByLabel('Filter the children of ou=bulk')).toBeVisible()
 })
 
 test('shows leaves without an expand control', async () => {
@@ -103,8 +102,6 @@ test('stays responsive with 100,000 nodes (performance check)', async () => {
       queued: false,
       incomplete: false,
       error: undefined,
-      filter: '',
-      filterOpen: false,
       loading: false,
     }
     const rootKey = 'dc=synthetic'
@@ -175,20 +172,79 @@ test('stays responsive with 100,000 nodes (performance check)', async () => {
   expect((Date.now() - started) / 30).toBeLessThan(60)
 })
 
-test.describe('filter, refresh and Copy DN (task 9.3)', () => {
-  test('filters the loaded children of a node by text, ignoring case', async () => {
-    await tree().getByRole('button', { name: 'Expand dc=example,dc=com' }).click()
-    await tree().getByRole('button', { name: 'Expand ou=bulk' }).click()
-    await expect(item('ou=bulk')).toContainText('5,000')
-    await tree().getByLabel('Filter the children of ou=bulk').fill('USER0001')
-    await expect(tree().getByRole('treeitem', { name: /^cn=user0001\d$/ })).toHaveCount(10)
-    await expect(item('cn=user00001')).toHaveCount(0)
-    await tree().getByLabel('Filter the children of ou=bulk').fill('nothing-matches')
-    await expect(tree()).toContainText('No entries match.')
-    await tree().getByLabel('Filter the children of ou=bulk').press('Escape')
-    await expect(item('cn=user00001')).toBeVisible()
+test.describe('tree filter', () => {
+  const filtered = () => page.getByRole('tree', { name: 'Filtered directory tree' })
+  const filteredItem = (name: string) => filtered().getByRole('treeitem', { name, exact: true })
+  const filterForm = () => page.getByRole('form', { name: 'Filter the tree' })
+  const status = () => page.getByRole('region', { name: 'Directory' }).getByRole('status')
+
+  async function filterBy(attribute: string, operator: string, value: string): Promise<void> {
+    await filterForm().getByLabel('Filter attribute').fill(attribute)
+    // Enter moves on to the value, closing the suggestions.
+    await filterForm().getByLabel('Filter attribute').press('Enter')
+    await expect(filterForm().getByLabel('Filter value')).toBeFocused()
+    await filterForm().getByLabel('Filter operator').selectOption({ label: operator })
+    if (value !== '') {
+      await filterForm().getByLabel('Filter value').fill(value)
+    }
+    await filterForm().getByRole('button', { name: 'Filter' }).click()
+  }
+
+  test('finds entries by name below the selected entry and shows the path to them', async () => {
+    await item('dc=example,dc=com').click()
+    await filterBy('', 'contains', 'jdoe')
+    await expect(status()).toHaveText('1 match below dc=example,dc=com.')
+    await expect(filtered().getByRole('treeitem')).toHaveText(['dc=example,dc=com', 'ou=people', 'uid=jdoe'])
+    await expect(filteredItem('uid=jdoe')).toHaveAttribute('data-match', 'true')
+    await expect(filteredItem('ou=people')).toHaveAttribute('data-match', 'false')
+
+    await filteredItem('uid=jdoe').click()
+    await expect(
+      page.getByRole('region', { name: 'Entry' }).getByRole('heading', { name: 'jdoe' }),
+    ).toBeVisible()
+    await expect(filteredItem('uid=jdoe')).toHaveAttribute('aria-selected', 'true')
+
+    // Clearing brings the tree back, opened to the entry that was picked.
+    await page.getByRole('button', { name: 'Clear filter' }).click()
+    await expect(filtered()).toHaveCount(0)
+    await expect(item('uid=jdoe')).toHaveAttribute('aria-selected', 'true')
+    await expect(item('ou=groups')).toBeVisible()
   })
 
+  test('searches entries that were never loaded, by attribute', async () => {
+    await item('dc=example,dc=com').click()
+    await filterBy('sn', 'equals', 'Bulk 04242')
+    await expect(filtered().getByRole('treeitem')).toHaveText([
+      'dc=example,dc=com',
+      'ou=bulk',
+      'cn=user04242',
+    ])
+  })
+
+  test('searches only the children when the subtree is not included', async () => {
+    await item('dc=example,dc=com').click()
+    await filterForm().getByLabel('Whole subtree, not only the children').uncheck()
+    await filterBy('uid', 'equals', 'jdoe')
+    await expect(status()).toHaveText('No entries match directly below dc=example,dc=com.')
+    await filterBy('ou', 'starts with', 'peo')
+    await expect(filtered().getByRole('treeitem')).toHaveText(['dc=example,dc=com', 'ou=people'])
+  })
+
+  test('needs no value for "exists" and stops at the size limit', async () => {
+    await item('dc=example,dc=com').click()
+    await filterForm().getByLabel('Filter operator').selectOption({ label: 'exists' })
+    await expect(filterForm().getByLabel('Filter value')).toBeDisabled()
+    await filterForm().getByLabel('Filter attribute').fill('cn')
+    await filterForm().getByLabel('Filter attribute').press('Tab')
+    await expect(page.getByRole('listbox')).toHaveCount(0)
+    await filterForm().getByRole('button', { name: 'Filter' }).click()
+    await expect(status()).toHaveText(
+      'Showing the first 1,000 matches below dc=example,dc=com. Narrow the filter to see the rest.',
+    )
+  })
+})
+
+test.describe('refresh and Copy DN (task 9.3)', () => {
   test('copies a DN from the context menu and with Cmd/Ctrl+C', async () => {
     const readClipboard = () => launched.app.evaluate(({ clipboard }) => clipboard.readText())
     await tree().getByRole('button', { name: 'Expand dc=example,dc=com' }).click()
