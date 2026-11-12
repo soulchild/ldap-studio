@@ -105,6 +105,20 @@ test('screenshot', async () => {
     await page.screenshot({ path: 'scratchpad/tree-filter-dark.png' })
     await page.getByRole('button', { name: 'Clear filter' }).click()
   }
+  // Scrollbars: idle (thumb hidden), hovered, and while scrolling.
+  await page.mouse.move(5, 790)
+  await page.waitForTimeout(300)
+  await page.screenshot({ path: 'scratchpad/scroll-idle.png' })
+  // Near the results list's scrollbar.
+  await page.mouse.move(1272, 730)
+  await page.waitForTimeout(300)
+  await page.screenshot({ path: 'scratchpad/scroll-hover.png' })
+  await page.mouse.wheel(0, 120)
+  await page.mouse.move(5, 790)
+  await page.waitForTimeout(150)
+  await page.screenshot({ path: 'scratchpad/scroll-scrolling.png' })
+  await page.waitForTimeout(1500)
+  await page.screenshot({ path: 'scratchpad/scroll-after.png' })
   await page.keyboard.press('ControlOrMeta+/')
   await page.waitForTimeout(300)
   await page.screenshot({ path: 'scratchpad/shortcuts-dark.png' })

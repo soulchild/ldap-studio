@@ -2,12 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './styles.css'
+import { showScrollbarsWhileScrolling } from './lib/scrolling'
 import { followColorScheme } from './lib/theme'
 import { useConnections } from './state/connections'
 import { useLog } from './state/log'
 import { useTree } from './state/tree'
 
 followColorScheme()
+showScrollbarsWhileScrolling()
 
 if (window.__e2e) {
   window.__stores = { tree: useTree, connections: useConnections, log: useLog }
