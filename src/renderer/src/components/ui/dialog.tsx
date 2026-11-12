@@ -11,6 +11,7 @@ export function Dialog({
   children,
   footer,
   className,
+  onCloseAutoFocus,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -19,6 +20,8 @@ export function Dialog({
   children?: ReactNode
   footer?: ReactNode
   className?: string
+  /** Where the focus goes on close; by default back to where it was before. */
+  onCloseAutoFocus?: (event: Event) => void
 }): React.JSX.Element {
   return (
     <Primitive.Root open={open} onOpenChange={onOpenChange}>
@@ -32,6 +35,7 @@ export function Dialog({
             className,
           )}
           {...(description ? {} : { 'aria-describedby': undefined })}
+          {...(onCloseAutoFocus ? { onCloseAutoFocus } : {})}
         >
           <div className="px-5 pt-4 pb-1">
             <Primitive.Title className="text-lg font-semibold">{title}</Primitive.Title>

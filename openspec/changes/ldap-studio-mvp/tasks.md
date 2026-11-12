@@ -64,7 +64,7 @@
 - [x] 9.1 Build the tree store (normalized node map per connection, expanded set) and an incremental flattening of visible nodes; verify unit tests for expand, collapse, and page append producing the correct flattened list
 - [x] 9.2 Render the virtualized tree with roots from base DN or naming contexts, load-on-expand streams, running counts, a loading row, incomplete notices, cancel on collapse, leaf detection, and keyboard navigation; verify with Playwright against the 5,000-child container and a manual performance check with 100k synthetic nodes
 - [x] 9.3 Add the tree filter (attribute, operator, value; children or whole subtree, searched on the server), refresh (keeping expanded state), and Copy DN; verify Playwright tests for the filter and refresh-after-external-add
-- [x] 9.4 Implement the DN lookup bar (syntax validation, reveal by loading ancestors, select and open, nearest existing ancestor on no-such-object); verify Playwright tests for the deep-jump, missing-DN, and invalid-syntax scenarios
+- [x] 9.4 Implement DN lookup as a Go to DN dialog reachable from the command palette (syntax validation, reveal by loading ancestors, select and open, nearest existing ancestor on no-such-object); verify Playwright tests for the deep-jump, missing-DN, and invalid-syntax scenarios
 - [x] 9.5 Show the disconnected/read-only state on connection loss (content kept, edit actions disabled); verify by stopping the container during a session
 
 ## 10. Entry viewing and editing

@@ -78,7 +78,7 @@ test('create a profile, connect, browse, edit, search, and switch the theme', as
   expect(searchEntries[0]?.['sn']).toBe('After')
 
   // Search for the saved value.
-  await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+  await page.keyboard.press('ControlOrMeta+f')
   await page.getByLabel('Base DN').fill('dc=example,dc=com')
   await page.getByLabel('Filter', { exact: true }).click()
   await page.keyboard.type('(sn=After)')

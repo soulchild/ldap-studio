@@ -1,5 +1,5 @@
 import { Copy, MoreHorizontal } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { Button } from '@renderer/components/ui/button'
 import { Checkbox } from '@renderer/components/ui/checkbox'
@@ -12,6 +12,7 @@ import { useConnections } from '@renderer/state/connections'
 import { useEditor } from '@renderer/state/editor'
 import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { useTree } from '@renderer/state/tree'
+import { useUi } from '@renderer/state/ui'
 import { SHORTCUTS, shortcutText, useShortcut } from '@renderer/shell/shortcuts'
 import { EntryIcon } from '@renderer/tree/EntryIcon'
 import { entryKind, KIND_LABELS } from '@renderer/tree/entry-kind'
@@ -72,7 +73,7 @@ export function EditorPane(): React.JSX.Element {
   }, [entryGone, editor])
 
   // Cmd/Ctrl+S saves the way the footer's primary button does; the review dialog still asks first.
-  useShortcut(SHORTCUTS.save, () => {
+  const reviewOrCreate = () => {
     const store = useEditor.getState()
     if (!store.entry || !entryConnectionLive || store.saving) {
       return
@@ -82,7 +83,22 @@ export function EditorPane(): React.JSX.Element {
     } else if (store.pendingChanges().length > 0 && store.check()) {
       setPreviewing(true)
     }
+  }
+  useShortcut(SHORTCUTS.save, reviewOrCreate)
+  // The command palette asks for the same.
+  const latestReviewOrCreate = useRef(reviewOrCreate)
+  useEffect(() => {
+    latestReviewOrCreate.current = reviewOrCreate
   })
+  useEffect(
+    () =>
+      useUi.subscribe((store, previous) => {
+        if (store.saveRequest !== previous.saveRequest) {
+          latestReviewOrCreate.current()
+        }
+      }),
+    [],
+  )
   useShortcut(SHORTCUTS.discard, () => {
     const store = useEditor.getState()
     if (store.entry && !store.entry.draft && store.pendingChanges().length > 0) {
@@ -107,7 +123,14 @@ export function EditorPane(): React.JSX.Element {
   }
   const entry = editor.entry
   if (!entry) {
-    return placeholder('Select an entry in the directory to see its attributes.')
+    return placeholder(
+      <>
+        <span className="block">Select an entry in the directory to see its attributes.</span>
+        <span className="mt-2 block text-xs text-subtle-foreground">
+          Press {shortcutText(SHORTCUTS.palette)} to go to a DN or run a command.
+        </span>
+      </>,
+    )
   }
 
   const readOnly = !entryConnectionLive

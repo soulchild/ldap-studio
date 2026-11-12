@@ -11,7 +11,8 @@ Apache Directory Studio is the de-facto LDAP GUI, but it requires a Java runtime
 - Secure credential storage: bind passwords optionally saved per connection, encrypted via the OS keychain (Electron `safeStorage`); weak-storage fallbacks are detected and the user is warned or saving is refused.
 - Schema awareness without a schema UI: the server schema (`cn=subschema`) is loaded per connection and drives attribute autocomplete, required/allowed attributes, single- vs multi-value handling, and binary detection everywhere. Built as a standalone service so a schema browser can be added later.
 - Directory tree: lazy loading of children on expand, streamed in pages via the Paged Results control into a virtualized tree, with live counts, a server-side tree filter (attribute, operator, value; children or whole subtree), and cancellation.
-- DN lookup: a global bar that accepts a DN and jumps to the entry in the tree.
+- DN lookup: a Go to DN dialog that accepts a DN and jumps to the entry in the tree.
+- Command palette: every common action, found by typing.
 - Search: raw LDAP filter with syntax validation and schema-based autocomplete; base DN, scope, attribute list, and size limit; virtualized results table that opens entries in the editor; automatic recent-search history.
 - Entry operations: create (schema-guided, pre-filled required attributes), create from copy, inline edit with a reviewable change preview applied as a single modify, rename/move (modify DN, including drag-and-drop), delete and confirmed subtree delete (Tree Delete control when supported, otherwise children-first).
 - Binary attributes: always handled as raw bytes; type-aware views (image thumbnails, decoded certificates, `objectGUID`/`objectSid` strings, hex/base64 fallback) with replace-from-file and save-to-file.

@@ -285,9 +285,11 @@ test.describe('refresh and Copy DN (task 9.3)', () => {
 })
 
 test.describe('DN lookup (task 9.4)', () => {
-  const lookup = () => page.getByLabel('Go to DN')
+  const lookup = () => page.getByRole('dialog', { name: 'Go to DN' }).getByLabel('Go to DN')
+  const openLookup = () => page.keyboard.press('ControlOrMeta+l')
 
   test('jumps to a deep entry, expanding and loading its ancestors', async () => {
+    await openLookup()
     await lookup().fill('cn=user04711, ou=Bulk, dc=example, dc=com')
     await lookup().press('Enter')
     await expect(item('cn=user04711')).toHaveAttribute('aria-selected', 'true')
@@ -298,6 +300,7 @@ test.describe('DN lookup (task 9.4)', () => {
   })
 
   test('names the closest existing ancestor of a missing DN and goes there', async () => {
+    await openLookup()
     await lookup().fill('uid=nobody,ou=people,dc=example,dc=com')
     await lookup().press('Enter')
     const alert = page.getByRole('alert')
@@ -314,6 +317,7 @@ test.describe('DN lookup (task 9.4)', () => {
         return log?.getState().records.length ?? -1
       })
     const before = await operations()
+    await openLookup()
     await lookup().fill('cn=jdoe,,dc=example')
     await lookup().press('Enter')
     await expect(page.getByRole('alert')).toContainText('This is not a valid DN')
@@ -321,9 +325,17 @@ test.describe('DN lookup (task 9.4)', () => {
     expect(await operations()).toBe(before)
   })
 
-  test('is focused with Cmd/Ctrl+L', async () => {
+  test('opens with Cmd/Ctrl+L and from the command palette', async () => {
     await item('dc=example,dc=com').click()
-    await page.keyboard.press('ControlOrMeta+l')
+    await openLookup()
+    await expect(lookup()).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(tree()).toBeFocused()
+
+    await page.keyboard.press('ControlOrMeta+k')
+    await page.keyboard.type('go to')
+    await page.keyboard.press('Enter')
     await expect(lookup()).toBeFocused()
   })
 })

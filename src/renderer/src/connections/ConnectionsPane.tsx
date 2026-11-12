@@ -1,5 +1,5 @@
 import { LockOpen, MoreHorizontal, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { IconButton } from '@renderer/components/IconButton'
@@ -11,6 +11,7 @@ import { describeConnectionError, useConnections, type ConnectionState } from '@
 import type { Profile } from '@shared/ipc'
 import { CertificateDialog } from './CertificateDialog'
 import { PasswordPrompt } from './PasswordPrompt'
+import { useUi } from '@renderer/state/ui'
 import { ProfileEditor } from './ProfileEditor'
 
 const STATUS: Record<ConnectionState['status'], { label: string; dot: string }> = {
@@ -30,6 +31,16 @@ export function ConnectionsPane(): React.JSX.Element {
   const remove = useConnections((state) => state.remove)
   const [editing, setEditing] = useState<Editing>()
   const [deleting, setDeleting] = useState<Profile>()
+  // "New connection…" from the command palette.
+  useEffect(
+    () =>
+      useUi.subscribe((store, previous) => {
+        if (store.newConnectionRequest !== previous.newConnectionRequest) {
+          setEditing({ profile: undefined })
+        }
+      }),
+    [],
+  )
 
   return (
     <section className="flex h-full flex-col" aria-label="Connections">

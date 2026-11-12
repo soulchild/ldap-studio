@@ -1,8 +1,6 @@
-import { Keyboard, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Group, Panel, useGroupRef } from 'react-resizable-panels'
 import { EntryActionDialogs } from '@renderer/actions/EntryActionDialogs'
-import { IconButton } from '@renderer/components/IconButton'
 import { EditorPane } from '@renderer/editor/EditorPane'
 import { ConnectionsPane } from '@renderer/connections/ConnectionsPane'
 import { openSearch } from '@renderer/search/open'
@@ -11,10 +9,12 @@ import { DirectoryPane } from '@renderer/tree/DirectoryPane'
 import type { Settings } from '@shared/settings'
 import { BottomPanel } from './BottomPanel'
 import { useLayout, type BottomTab } from '@renderer/state/layout'
-import { DnLookup } from './DnLookup'
+import { useUi, type Overlay } from '@renderer/state/ui'
+import { CommandPalette } from './CommandPalette'
+import { GoToDnDialog } from './GoToDnDialog'
 import { BOTTOM_BAR_HEIGHT, DEFAULT_PANE_SIZES } from './layout-defaults'
 import { ResizeHandle } from './ResizeHandle'
-import { SHORTCUTS, shortcutText, useShortcut } from './shortcuts'
+import { SHORTCUTS, useShortcut } from './shortcuts'
 import { ShortcutsDialog } from './ShortcutsDialog'
 import { useFixedPane } from './useFixedPane'
 
@@ -27,9 +27,19 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
   const update = useSettings((state) => state.update)
   const [collapsed, setCollapsed] = useState(settings.bottomPanelCollapsed)
   const tab = useLayout((store) => store.bottomTab)
-  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const overlay = useUi((store) => store.overlay)
   useShortcut(SHORTCUTS.search, openSearch)
-  useShortcut(SHORTCUTS.help, () => setShortcutsOpen((open) => !open), { inDialogs: true })
+  // These switch between the workspace's own overlays, but leave other dialogs alone.
+  const overlayShortcut = (target: Overlay) => () => {
+    const current = useUi.getState().overlay
+    if (current === undefined && document.querySelector('[role="dialog"], [role="alertdialog"]')) {
+      return
+    }
+    useUi.getState().toggle(target)
+  }
+  useShortcut(SHORTCUTS.palette, overlayShortcut('palette'), { inDialogs: true })
+  useShortcut(SHORTCUTS.dnLookup, overlayShortcut('goToDn'), { inDialogs: true })
+  useShortcut(SHORTCUTS.help, overlayShortcut('shortcuts'), { inDialogs: true })
 
   const size = (id: string) => settings.paneSizes[id] ?? DEFAULT_PANE_SIZES[id] ?? 240
   const remember = (id: string) => (pixels: number) => {
@@ -101,7 +111,12 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
   return (
     <>
       <EntryActionDialogs />
-      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <ShortcutsDialog
+        open={overlay === 'shortcuts'}
+        onOpenChange={(open) => (open ? useUi.getState().show('shortcuts') : useUi.getState().close())}
+      />
+      <CommandPalette />
+      <GoToDnDialog />
       <Group
         id="main-layout"
         orientation="horizontal"
@@ -135,24 +150,6 @@ export function Workspace({ settings }: { settings: Settings }): React.JSX.Eleme
         <ResizeHandle orientation="horizontal" />
         <Panel id="content" minSize={400}>
           <div className="flex h-full flex-col">
-            <div className="flex h-11 shrink-0 items-center gap-3 border-b bg-surface px-3.5">
-              <DnLookup />
-              <button
-                type="button"
-                onClick={openSearch}
-                title={`Search  ${shortcutText(SHORTCUTS.search)}`}
-                className="flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-2.5 text-sm text-muted-foreground hover:bg-hover hover:text-foreground"
-              >
-                <Search className="size-4" /> Search
-              </button>
-              <IconButton
-                label={`Keyboard shortcuts  ${shortcutText(SHORTCUTS.help)}`}
-                className="ml-auto size-8"
-                onClick={() => setShortcutsOpen(true)}
-              >
-                <Keyboard className="size-4" />
-              </IconButton>
-            </div>
             <div className="min-h-0 flex-1">
               <Group
                 id="content-layout"

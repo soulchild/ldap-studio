@@ -21,7 +21,9 @@ Each scenario in `openspec/changes/ldap-studio-mvp/specs` and the test or checkl
 | Interface cannot read stored secrets | e2e/security › the renderer has no Node.js access; unit/profiles › never returns the password or its encrypted form to the renderer |
 | Failed modify is logged              | int/session-lifecycle › records searches, reads and failed modifies with timing and result codes                                    |
 | Bind password is redacted            | int/session-lifecycle › records the bind with the DN but never the password; e2e/log                                                |
-| Jump to DN lookup                    | e2e/shortcuts › Cmd/Ctrl+L focuses the DN lookup with its contents selected                                                         |
+| Jump to DN lookup                    | e2e/shortcuts › Cmd/Ctrl+L opens Go to DN with the field focused                                                                    |
+| Run a command by typing              | e2e/shortcuts › Cmd/Ctrl+K opens the command palette, which runs a command with Enter; unit/commands › matchCommands                |
+| Go to DN from the palette            | e2e/tree › DN lookup › opens with Cmd/Ctrl+L and from the command palette                                                           |
 
 ## Connection management
 

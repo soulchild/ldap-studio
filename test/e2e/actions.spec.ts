@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '@playwright/test'
 import { Client } from 'ldapts'
-import { launchApp, relaunch, type LaunchedApp } from './app'
+import { goToDn, launchApp, relaunch, type LaunchedApp } from './app'
 import { OPENLDAP, testServersRunning } from './ldap-env'
 
 const DELETER = { dn: 'uid=deleter,ou=people,dc=example,dc=com', password: 'deleter-test-pw' }
@@ -72,8 +72,7 @@ async function start(profiles: { name: string; dn: string; password: string }[])
   const row = page.getByRole('listitem', { name: profiles[0]!.name })
   await row.getByRole('button', { name: 'Connect' }).click()
   await expect(row).toHaveAttribute('data-status', 'connected')
-  await page.getByLabel('Go to DN').fill(container)
-  await page.getByLabel('Go to DN').press('Enter')
+  await goToDn(page, container)
   await expect(item(`ou=${containerName}`)).toHaveAttribute('aria-selected', 'true')
   // An empty container is a leaf and has nothing to expand.
   const expand = tree().getByRole('button', { name: `Expand ou=${containerName}` })
@@ -123,7 +122,9 @@ test.describe('creating entries (task 11.1)', () => {
 
     await expect(editor().getByRole('heading', { name: 'New entry' })).toBeVisible()
     await expect(editor().getByLabel('cn value', { exact: true })).toHaveValue('Jane Doe')
-    await expect(editor().getByRole('rowgroup', { name: 'sn', exact: true })).toContainText('required')
+    await expect(
+      editor().getByRole('rowgroup', { name: 'sn', exact: true }).getByRole('img', { name: 'Required' }),
+    ).toBeVisible()
     await expect(editor().getByLabel('sn value', { exact: true })).toHaveValue('')
     expect(await exists(`cn=Jane Doe,${container}`)).toBe(false)
 

@@ -65,7 +65,7 @@ async function setSearch(options: {
   attributes?: string
   limit?: string
 }) {
-  await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+  await page.keyboard.press('ControlOrMeta+f')
   if (options.base !== undefined) {
     await page.getByLabel('Base DN').fill(options.base)
   }
@@ -90,7 +90,7 @@ test.describe('search form (task 13.1)', () => {
   test('defaults the base to the selected entry and the scope to subtree', async () => {
     await tree().getByRole('button', { name: 'Expand dc=example,dc=com' }).click()
     await item('ou=people').click()
-    await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+    await page.keyboard.press('ControlOrMeta+f')
     await expect(page.getByLabel('Base DN')).toHaveValue('ou=people,dc=example,dc=com')
     await expect(page.getByLabel('Scope')).toHaveValue('sub')
     await expect(filter()).toBeFocused()
@@ -98,7 +98,7 @@ test.describe('search form (task 13.1)', () => {
 
   test('picks the base DN in the tree', async () => {
     await tree().getByRole('button', { name: 'Expand dc=example,dc=com' }).click()
-    await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+    await page.keyboard.press('ControlOrMeta+f')
     await page.getByRole('button', { name: 'Pick in tree' }).click()
     await item('ou=groups').click()
     await expect(page.getByLabel('Base DN')).toHaveValue('ou=groups,dc=example,dc=com')
@@ -122,7 +122,7 @@ test.describe('search form (task 13.1)', () => {
   })
 
   test('suggests attributes and object classes while typing', async () => {
-    await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+    await page.keyboard.press('ControlOrMeta+f')
     await filter().click()
     await page.keyboard.type('(mai')
     await expect(page.getByRole('option', { name: 'mail', exact: true })).toBeVisible()
@@ -205,7 +205,7 @@ test.describe('recent searches (task 13.3)', () => {
     launched = await relaunch(launched)
     page = launched.window
     await connect()
-    await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+    await page.keyboard.press('ControlOrMeta+f')
     await page.getByRole('button', { name: 'Recent' }).click()
     const items = page.getByRole('menuitem')
     await expect(items).toHaveText([

@@ -83,10 +83,10 @@ Selecting an entry in the tree SHALL open it in the entry editor.
 - **THEN** the entry editor shows that entry's attributes
 
 ### Requirement: DN lookup
-The application SHALL provide a DN lookup bar. Entering a DN SHALL open that entry in the editor and reveal it in the tree, expanding and loading ancestors as needed. DN comparison SHALL ignore case and insignificant whitespace.
+The application SHALL provide a Go to DN dialog, opened by a shortcut or from the command palette. Entering a DN SHALL open that entry in the editor and reveal it in the tree, expanding and loading ancestors as needed. DN comparison SHALL ignore case and insignificant whitespace.
 
 #### Scenario: Jump to deep entry
-- **WHEN** the user enters "cn=jdoe, ou=People, dc=example, dc=com" in the DN lookup bar
+- **WHEN** the user enters "cn=jdoe, ou=People, dc=example, dc=com" in the Go to DN dialog
 - **THEN** the tree expands down to "cn=jdoe,ou=people,dc=example,dc=com", selects it, and the editor shows it
 
 #### Scenario: DN does not exist
@@ -95,7 +95,7 @@ The application SHALL provide a DN lookup bar. Entering a DN SHALL open that ent
 
 #### Scenario: Invalid DN syntax
 - **WHEN** the user enters text that is not a valid DN
-- **THEN** the lookup bar shows a syntax error and does not query the server
+- **THEN** the dialog shows a syntax error and does not query the server
 
 ### Requirement: Copy DN
 The user SHALL be able to copy the DN of any tree node to the clipboard.

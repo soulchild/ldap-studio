@@ -86,3 +86,11 @@ export async function relaunch(previous: LaunchedApp): Promise<LaunchedApp> {
   const next = await launchApp({ dataDirectory: previous.dataDirectory })
   return withClose(next.app, next.window, previous.dataDirectory, previous.ownsDirectory)
 }
+
+/** Opens an entry with the Go to DN dialog (Cmd/Ctrl+L), as a user would. */
+export async function goToDn(page: Page, dn: string): Promise<void> {
+  await page.keyboard.press('ControlOrMeta+l')
+  const field = page.getByRole('dialog', { name: 'Go to DN' }).getByLabel('Go to DN')
+  await field.fill(dn)
+  await field.press('Enter')
+}

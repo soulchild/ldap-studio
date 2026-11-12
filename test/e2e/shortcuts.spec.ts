@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '@playwright/test'
 import { Client } from 'ldapts'
-import { launchApp, relaunch, type LaunchedApp } from './app'
+import { goToDn, launchApp, relaunch, type LaunchedApp } from './app'
 import { OPENLDAP, testServersRunning } from './ldap-env'
 
 let launched: LaunchedApp
@@ -52,8 +52,7 @@ const snInput = () =>
   editor().getByRole('rowgroup', { name: 'sn', exact: true }).getByLabel('sn value', { exact: true })
 
 async function open(dn: string): Promise<void> {
-  await page.getByLabel('Go to DN').fill(dn)
-  await page.getByLabel('Go to DN').press('Enter')
+  await goToDn(page, dn)
   await expect(editor().getByRole('heading', { name: 'Keys' })).toBeVisible()
 }
 
@@ -63,17 +62,27 @@ async function storedSn(): Promise<string> {
 }
 
 test.describe('keyboard shortcuts (task 7.6)', () => {
-  test('Cmd/Ctrl+L focuses the DN lookup with its contents selected', async () => {
-    const lookup = page.getByLabel('Go to DN')
-    await lookup.fill('dc=example,dc=com')
+  test('Cmd/Ctrl+L opens Go to DN with the field focused', async () => {
     await page.getByRole('tree', { name: 'Directory tree' }).focus()
     await page.keyboard.press('ControlOrMeta+l')
-    await expect(lookup).toBeFocused()
-    const selection = await lookup.evaluate((input: HTMLInputElement) => [
-      input.selectionStart,
-      input.selectionEnd,
-    ])
-    expect(selection).toEqual([0, 'dc=example,dc=com'.length])
+    await expect(page.getByRole('dialog', { name: 'Go to DN' }).getByLabel('Go to DN')).toBeFocused()
+  })
+
+  test('Cmd/Ctrl+K opens the command palette, which runs a command with Enter', async () => {
+    await page.keyboard.press('ControlOrMeta+k')
+    const palette = page.getByRole('dialog', { name: 'Command palette' })
+    await expect(palette.getByLabel('Command', { exact: true })).toBeFocused()
+    await page.keyboard.type('log')
+    await expect(palette.getByRole('option').first()).toHaveText(/Show the operation log/)
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'Log' })).toHaveAttribute('aria-selected', 'true')
+
+    // Pressing it again closes it.
+    await page.keyboard.press('ControlOrMeta+k')
+    await expect(palette).toBeVisible()
+    await page.keyboard.press('ControlOrMeta+k')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
   test('Cmd/Ctrl+F opens the search with the filter focused', async () => {
@@ -122,16 +131,21 @@ test.describe('keyboard shortcuts (task 7.6)', () => {
     await page.keyboard.press('ControlOrMeta+/')
     await expect(page.getByRole('dialog')).toHaveCount(0)
 
-    await page.getByRole('button', { name: /^Keyboard shortcuts/ }).click()
+    // Also from the command palette.
+    await page.keyboard.press('ControlOrMeta+k')
+    await page.keyboard.type('keyboard')
+    await page.keyboard.press('Enter')
     await expect(dialog).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
-  test('workspace shortcuts wait while a dialog is open', async () => {
-    await page.keyboard.press('ControlOrMeta+/')
-    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible()
+  test('workspace shortcuts wait while another dialog is open', async () => {
+    await page.getByRole('button', { name: 'New connection' }).first().click()
+    await expect(page.getByRole('dialog', { name: 'New connection' })).toBeVisible()
     await page.keyboard.press('ControlOrMeta+l')
-    await expect(page.getByLabel('Go to DN')).not.toBeFocused()
+    await page.keyboard.press('ControlOrMeta+k')
+    await expect(page.getByRole('dialog')).toHaveCount(1)
+    await expect(page.getByRole('dialog', { name: 'New connection' })).toBeVisible()
   })
 })
