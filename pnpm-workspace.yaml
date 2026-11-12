@@ -1,0 +1,6 @@
+# Electron 45 downloads its binary on first run (or via `pnpm exec install-electron`),
+# so it needs no install script.
+allowBuilds:
+  electron: false
+  # Squirrel installer support pulled in by electron-builder; the Windows build uses NSIS.
+  electron-winstaller: false

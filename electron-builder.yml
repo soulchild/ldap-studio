@@ -1,0 +1,52 @@
+# Installers for macOS, Windows and Linux (task 14.1). Unsigned: macOS Gatekeeper and Windows
+# SmartScreen warn on first launch until signing is set up.
+appId: app.ldap-studio
+productName: LDAP Studio
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**
+  - package.json
+# The main process loads ldapts and zod at runtime; everything else is bundled into out/.
+asar: true
+mac:
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  category: public.app-category.developer-tools
+  identity: null
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}-${arch}.${ext}
+# The deb format requires a homepage. Placeholder until the project has a public URL.
+extraMetadata:
+  homepage: https://example.com/ldap-studio
+linux:
+  target: [AppImage, deb]
+  category: Development
+  maintainer: LDAP Studio
+  synopsis: LDAP directory browser and editor
+  artifactName: ${name}-${version}-${arch}.${ext}
+deb:
+  # electron-builder's defaults plus the sound and GPU buffer libraries Electron links against,
+  # which minimal installs lack. Ubuntu 24.04 renamed libasound2 to libasound2t64.
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libuuid1
+    - libsecret-1-0
+    - libgbm1
+    - libasound2 | libasound2t64

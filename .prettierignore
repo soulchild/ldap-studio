@@ -1,0 +1,10 @@
+out/
+dist/
+coverage/
+pnpm-lock.yaml
+openspec/
+.pnpm-store/
+scratchpad/
+.corral.local.yml
+test-results/
+playwright-report/

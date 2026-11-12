@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": [
+    "test/e2e/**/*.ts",
+    "playwright.config.ts",
+    "src/renderer/src/env.d.ts",
+    "src/shared/**/*.ts",
+    "test/integration/tcp-proxy.ts"
+  ]
+}
