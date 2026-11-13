@@ -1,7 +1,7 @@
 /** Which entry action dialog is open (entry-editing spec: create, copy, rename, move, delete). */
 import { create } from 'zustand'
 
-export type EntryAction = 'create' | 'copy' | 'rename' | 'move' | 'delete'
+export type EntryAction = 'create' | 'copy' | 'rename' | 'move' | 'delete' | 'reload'
 
 export interface ActionRequest {
   kind: EntryAction

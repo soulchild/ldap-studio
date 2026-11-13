@@ -217,6 +217,8 @@ export function EditorPane(): React.JSX.Element {
                   { label: 'Move…', onSelect: () => act('move'), disabled: readOnly },
                   'separator',
                   { label: 'Delete…', onSelect: () => act('delete'), disabled: readOnly, destructive: true },
+                  'separator',
+                  { label: 'Reload', onSelect: () => act('reload') },
                 ]}
               />
             </div>
