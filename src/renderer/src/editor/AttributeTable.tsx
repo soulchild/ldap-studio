@@ -22,6 +22,7 @@ import { BinaryValue } from './BinaryValue'
 import { DnPickerDialog } from './DnPickerDialog'
 import { PasswordDialog } from './PasswordDialog'
 import { suggestedFileName } from './file-names'
+import { isMultiline, lineBreakStyle, lineCount, MAX_VISIBLE_LINES, withLineBreaks } from './multiline'
 
 /** Attributes with more values than this start collapsed to a value count. */
 const COLLAPSE_ABOVE = 10
@@ -432,7 +433,8 @@ function ValueField({
     return (
       <span
         className={cn(
-          'selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm break-all',
+          'selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm',
+          isMultiline(value) ? 'py-1 break-words whitespace-pre-wrap' : 'break-all',
           muted && 'text-muted-foreground',
         )}
       >
@@ -441,17 +443,68 @@ function ValueField({
     )
   }
   return (
-    <input
+    <TextField id={id} name={name} value={value} muted={muted} autoFocus={autoFocus} onChange={onChange} />
+  )
+}
+
+const textFieldClasses = cn(
+  'min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
+  'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
+)
+
+/**
+ * An editable text value: an input, or a text area for multi-line values (entry-editing spec:
+ * multi-line text values, line breaks are preserved).
+ */
+function TextField({
+  id,
+  name,
+  value,
+  muted,
+  autoFocus,
+  onChange,
+}: {
+  id: string
+  name: string
+  value: string
+  muted: boolean
+  autoFocus: boolean
+  onChange: (value: string) => void
+}): React.JSX.Element {
+  // Once multi-line, stays a text area: switching to an input when the last line break is
+  // deleted would mount a new element and lose the focus and the cursor mid-edit.
+  const [multiline, setMultiline] = useState(() => isMultiline(value))
+  if (!multiline && isMultiline(value)) {
+    setMultiline(true)
+  }
+  // A text area hands back LF only; CR LF values get theirs back, so only edited lines change.
+  const [style] = useState(() => lineBreakStyle(value))
+  if (!multiline) {
+    return (
+      <input
+        id={id}
+        aria-label={`${name} value`}
+        value={value}
+        autoFocus={autoFocus}
+        spellCheck={false}
+        onChange={(event) => onChange(event.target.value)}
+        className={cn(textFieldClasses, 'h-7', muted && 'text-muted-foreground')}
+      />
+    )
+  }
+  return (
+    <textarea
       id={id}
       aria-label={`${name} value`}
       value={value}
+      rows={Math.min(lineCount(value), MAX_VISIBLE_LINES)}
       autoFocus={autoFocus}
       spellCheck={false}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => onChange(withLineBreaks(event.target.value, style))}
       className={cn(
-        'h-7 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
+        textFieldClasses,
+        'min-h-7 resize-y overflow-y-auto py-1 leading-5',
         muted && 'text-muted-foreground',
-        'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
       )}
     />
   )
