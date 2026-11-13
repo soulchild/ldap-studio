@@ -3,7 +3,7 @@
  * search it ran on the server below the selected entry.
  */
 import { create } from 'zustand'
-import type { FilterMatch, FilterOperator } from '@renderer/tree/quick-filter'
+import { toFilterMatch, type FilterMatch, type FilterOperator } from '@renderer/tree/quick-filter'
 
 /** More matches than this are not useful in a tree; the user narrows the filter instead. */
 export const MAX_MATCHES = 1000
@@ -104,15 +104,7 @@ export const useTreeFilter = create<TreeFilterStore>((set, get) => {
             switch (event.kind) {
               case 'page':
                 update(connectionId, (applied) => ({
-                  matches: applied.matches.concat(
-                    event.data.entries.map((entry) => ({
-                      dn: entry.dn,
-                      objectClasses: (
-                        entry.attributes.find((attribute) => attribute.name.toLowerCase() === 'objectclass')
-                          ?.values ?? []
-                      ).filter((value): value is string => typeof value === 'string'),
-                    })),
-                  ),
+                  matches: applied.matches.concat(event.data.entries.map(toFilterMatch)),
                 }))
                 break
               case 'done':
