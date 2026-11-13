@@ -63,9 +63,20 @@ jobs:
       # Ubuntu 24.04 blocks the unprivileged user namespaces Chromium's sandbox needs.
       - if: env.RUN_E2E == 'true'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      # The app saves passwords only with real encryption. A D-Bus session with an unlocked, empty
+      # keyring gives Electron the Secret Service it uses on a Linux desktop.
+      - name: Install a keyring for saved passwords
+        if: env.RUN_E2E == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnome-keyring libsecret-1-0 dbus
       - name: End-to-end tests, including the smoke test
         if: env.RUN_E2E == 'true'
-        run: xvfb-run -a pnpm test:e2e
+        run: |
+          dbus-run-session -- sh -c '
+            eval "$(printf "" | gnome-keyring-daemon --unlock --components=secrets | sed "s/^/export /")"
+            xvfb-run -a pnpm test:e2e
+          '
       - name: Note skipped end-to-end tests
         if: env.RUN_E2E != 'true'
         run: |
