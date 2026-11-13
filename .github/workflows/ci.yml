@@ -6,7 +6,7 @@
 #
 # The end-to-end tests are optional. They run when any of these holds:
 # - the workflow is started by hand (Actions → CI → Run workflow) with "Run the end-to-end tests",
-#   or run by the release workflow,
+#   or run by the release workflow with its e2e option on (the default),
 # - a pushed commit's message contains "[e2e]",
 # - a pull request has the label "e2e",
 # - the repository variable RUN_E2E is "true" (Settings → Secrets and variables → Actions).
@@ -40,7 +40,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      RUN_E2E: ${{ inputs.e2e == true || contains(github.event.head_commit.message, '[e2e]') || contains(github.event.pull_request.labels.*.name, 'e2e') || vars.RUN_E2E == 'true' }}
+      # A choice made when starting the workflow (by hand or from release.yml) wins over the rest.
+      RUN_E2E: ${{ inputs.e2e == true || (inputs.e2e == null && (contains(github.event.head_commit.message, '[e2e]') || contains(github.event.pull_request.labels.*.name, 'e2e') || vars.RUN_E2E == 'true')) }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

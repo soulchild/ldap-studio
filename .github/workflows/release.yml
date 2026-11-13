@@ -2,8 +2,8 @@
 #
 # Nothing is committed or tagged until every check has passed. In order:
 # 1. Check the version: a valid version whose tag does not exist yet.
-# 2. Run CI (ci.yml) with that version and the end-to-end tests: checks, tests, and the installers
-#    for macOS, Windows and Linux, each installed and launched.
+# 2. Run CI (ci.yml) with that version and, unless turned off, the end-to-end tests: checks, tests,
+#    and the installers for macOS, Windows and Linux, each installed and launched.
 # 3. Set the version in package.json, write CHANGELOG.md with git-cliff (cliff.toml), commit both
 #    as "chore(release): <version>", and push the commit and the tag v<version> together.
 # 4. Publish the GitHub release with the installers and this version's changelog as its notes.
@@ -20,6 +20,10 @@ on:
         description: Version to release, without the "v" (for example 1.2.0 or 1.2.0-beta.1)
         type: string
         required: true
+      e2e:
+        description: Run the end-to-end tests (turn off only to release without them)
+        type: boolean
+        default: true
 
 concurrency:
   group: release
@@ -56,7 +60,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       version: ${{ inputs.version }}
-      e2e: true
+      e2e: ${{ inputs.e2e }}
 
   publish:
     needs: ci
