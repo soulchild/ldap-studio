@@ -35,10 +35,7 @@ interface SearchStore {
   columns: string[]
   status: SearchStatus
   sort: SortOrder | undefined
-  /** Picking the base DN from the tree. */
-  picking: boolean
   setParams: (changes: Partial<SearchParams>) => void
-  setPicking: (picking: boolean) => void
   run: (connectionId: string) => Promise<void>
   stop: () => void
   setSort: (column: string) => void
@@ -55,14 +52,9 @@ export const useSearch = create<SearchStore>((set, get) => ({
   columns: [],
   status: { state: 'idle' },
   sort: undefined,
-  picking: false,
 
   setParams(changes) {
     set((store) => ({ params: { ...store.params, ...changes } }))
-  },
-
-  setPicking(picking) {
-    set({ picking })
   },
 
   async run(connectionId) {

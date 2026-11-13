@@ -1,10 +1,11 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ArrowDown, ArrowUp, Crosshair, History } from 'lucide-react'
+import { ArrowDown, ArrowUp, FolderTree, History } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { Button } from '@renderer/components/ui/button'
 import { ContextMenu } from '@renderer/components/ui/context-menu'
 import { DropdownMenu } from '@renderer/components/ui/dropdown-menu'
+import { DnPickerDialog } from '@renderer/editor/DnPickerDialog'
 import { cn } from '@renderer/lib/utils'
 import { useConnections } from '@renderer/state/connections'
 import { useEditor } from '@renderer/state/editor'
@@ -57,24 +58,7 @@ export function SearchPanel(): React.JSX.Element {
   const warnings = diagnostics.filter((item) => item.severity === 'warning')
   const canSearch = active !== undefined && search.params.filter.trim() !== '' && !syntaxError
   const running = search.status.state === 'running'
-
-  // While picking, the next tree selection becomes the base DN.
-  useEffect(() => {
-    if (!search.picking || !active) {
-      return
-    }
-    const before = useTree.getState().selected[active.connectionId]
-    return useTree.subscribe((store) => {
-      const key = store.selected[active.connectionId]
-      if (key && key !== before) {
-        const dn = store.trees[active.connectionId]?.nodes[key]?.dn
-        if (dn) {
-          useSearch.getState().setParams({ base: dn })
-        }
-        useSearch.getState().setPicking(false)
-      }
-    })
-  }, [search.picking, active])
+  const [browsing, setBrowsing] = useState(false)
 
   const run = () => {
     if (canSearch && active) {
@@ -155,20 +139,25 @@ export function SearchPanel(): React.JSX.Element {
             />
             <button
               type="button"
-              aria-pressed={search.picking}
-              title="Pick the base in the tree"
-              onClick={() => search.setPicking(!search.picking)}
-              className={cn(
-                'flex h-7 items-center gap-1 rounded-sm px-2 text-xs',
-                search.picking
-                  ? 'bg-selection-strong text-foreground'
-                  : 'hover:bg-hover hover:text-foreground',
-              )}
+              title="Choose the base from the directory"
+              onClick={() => setBrowsing(true)}
+              className="flex h-7 items-center gap-1 rounded-sm px-2 text-xs hover:bg-hover hover:text-foreground"
             >
-              <Crosshair className="size-3.5" />{' '}
-              {search.picking ? 'Select an entry in the tree' : 'Pick in tree'}
+              <FolderTree className="size-3.5" /> Browse…
             </button>
           </label>
+          {browsing ? (
+            <DnPickerDialog
+              connectionId={active.connectionId}
+              attribute="base DN"
+              initialDn={search.params.base}
+              onCancel={() => setBrowsing(false)}
+              onChoose={(base) => {
+                search.setParams({ base })
+                setBrowsing(false)
+              }}
+            />
+          ) : null}
           <label className="flex items-center gap-2">
             Scope
             <select

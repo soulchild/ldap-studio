@@ -96,13 +96,16 @@ test.describe('search form (task 13.1)', () => {
     await expect(filter()).toBeFocused()
   })
 
-  test('picks the base DN in the tree', async () => {
-    await tree().getByRole('button', { name: 'Expand dc=example,dc=com' }).click()
+  test('chooses the base DN from the directory', async () => {
     await page.keyboard.press('ControlOrMeta+f')
-    await page.getByRole('button', { name: 'Pick in tree' }).click()
-    await item('ou=groups').click()
+    await page.getByRole('button', { name: 'Browse…' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Choose base DN' })
+    await dialog
+      .getByRole('tree', { name: 'Entries to choose from' })
+      .getByRole('treeitem', { name: 'ou=groups', exact: true })
+      .dblclick()
+    await expect(dialog).toHaveCount(0)
     await expect(page.getByLabel('Base DN')).toHaveValue('ou=groups,dc=example,dc=com')
-    await expect(page.getByRole('button', { name: 'Pick in tree' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   test('marks a syntax error and blocks the search; warns about unknown attributes', async () => {

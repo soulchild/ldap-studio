@@ -88,7 +88,7 @@
 
 ## 13. Search
 
-- [x] 13.1 Build the search view (filter field with CodeMirror validation, error marks, schema autocomplete, and unknown-attribute warnings; base DN with tree picker; scope; attribute list with autocomplete; size limit; defaults from selection); verify the spec scenarios with component tests and Playwright
+- [x] 13.1 Build the search view (filter field with CodeMirror validation, error marks, schema autocomplete, and unknown-attribute warnings; base DN chosen in the DN browser dialog; scope; attribute list with autocomplete; size limit; defaults from selection); verify the spec scenarios with component tests and Playwright
 - [x] 13.2 Build the results table (virtualized, DN plus requested attribute columns, multi-value cells, binary descriptions, sorting, streaming, cancel, size-limit notice, errors that keep partial results) with open-in-editor and reveal-in-tree; verify a 5,000-result search with Playwright
 - [x] 13.3 Add the recent searches list (persisted per profile, rerun fills the parameters); verify with Playwright that history survives relaunch and deduplicates
 
