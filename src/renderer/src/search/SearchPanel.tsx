@@ -408,7 +408,7 @@ function ResultsTable(): React.JSX.Element {
                       void openResult(connectionId, entry.dn)
                     }
                   }}
-                  className="absolute inset-x-0 grid cursor-pointer items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
+                  className="absolute inset-x-0 grid cursor-default items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
                   style={{ ...template, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                 >
                   <span role="cell" className="flex min-w-0 items-center gap-2" title={entry.dn}>
