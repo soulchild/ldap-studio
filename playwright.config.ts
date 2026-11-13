@@ -6,6 +6,7 @@ export default defineConfig({
   timeout: 30_000,
   // One worker: tests run one after another, and test/e2e/app.ts caps open app instances at 5.
   workers: 1,
+  globalSetup: './test/e2e/global-setup.ts',
   globalTeardown: './test/e2e/global-teardown.ts',
   reporter: [['list']],
 })

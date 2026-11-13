@@ -35,6 +35,7 @@ Behavior is specified with OpenSpec in `openspec/specs/` (capabilities: app-shel
 | End-to-end  | `test/e2e/*.spec.ts` (Playwright, Electron) | `pnpm test:env:up`, then `pnpm test:e2e` (builds the app first) |
 
 - Integration and end-to-end tests are **skipped** when the Docker test servers are down. A skipped run is not a passing run, so start them first. Servers, ports and test accounts are described in `test/ldap/README.md`.
+- The e2e tests need working password storage and stop at once without it. macOS and Windows have it built in. On Linux they need an unlocked keyring through the Secret Service (see the e2e step in `.github/workflows/ci.yml`).
 - To rerun one e2e file after `pnpm build`: `pnpm exec playwright test test/e2e/editor.spec.ts`.
 - E2E tests find elements by role and accessible name (`getByRole('button', { name: … })`). Give interactive elements meaningful roles and `aria-label`s, and keep them stable.
 - Before calling work done, run `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm test`, plus the e2e tests for UI changes.

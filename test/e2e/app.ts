@@ -39,7 +39,13 @@ export async function launchApp(options: { dataDirectory?: string } = {}): Promi
   let app: ElectronApplication
   try {
     app = await electron.launch({
-      args: [resolve(__dirname, '../..'), `--user-data-dir=${dataDirectory}`],
+      args: [
+        resolve(__dirname, '../..'),
+        `--user-data-dir=${dataDirectory}`,
+        // Without a desktop session Electron falls back to basic_text, which the app refuses for
+        // passwords. CI provides a keyring through the Secret Service (.github/workflows/ci.yml).
+        ...(process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : []),
+      ],
       // LDAP_STUDIO_E2E also opens the window without taking focus (src/main/index.ts).
       env: { ...process.env, LDAP_STUDIO_E2E: '1' },
       // Playwright emulates a light colour scheme by default, which would hide the app's own theming.
