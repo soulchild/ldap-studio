@@ -3,7 +3,7 @@
 export type LineBreakStyle = 'lf' | 'crlf'
 
 /** Multi-line values show at most this many lines before they scroll. */
-export const MAX_VISIBLE_LINES = 5
+export const MAX_VISIBLE_LINES = 10
 
 const LINE_BREAK = /\r\n|\r|\n/
 
