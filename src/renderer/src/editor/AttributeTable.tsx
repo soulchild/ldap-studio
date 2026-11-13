@@ -194,7 +194,7 @@ export function AttributeTable({
             </div>
             <div className="flex min-w-0 flex-col">
               {collapsed ? (
-                <div role="row" className="py-0.5">
+                <div role="row" className="pt-0.5 pb-px">
                   <div role="cell">
                     <Button
                       variant="quiet"
@@ -211,7 +211,7 @@ export function AttributeTable({
                 const fresh = isNewValue(original, attribute.name, value)
                 const inputId = `${attribute.name}-${index}`
                 return (
-                  <div key={index} role="row" className="group/value relative flex items-center gap-1 py-0.5">
+                  <div key={index} role="row" className="group/value relative flex items-center gap-1 pt-0.5 pb-px">
                     {fresh && !locked ? (
                       <span
                         className="absolute top-1.5 bottom-1.5 -left-2.5 w-0.5 rounded-full bg-primary"
@@ -427,7 +427,7 @@ function ValueField({
       <span
         className={cn(
           'selectable flex min-h-7 min-w-0 flex-1 items-center px-2.5 font-mono text-sm',
-          isMultiline(value) ? 'py-1 break-words whitespace-pre-wrap' : 'break-all',
+          isMultiline(value) ? 'py-1 wrap-break-word whitespace-pre-wrap' : 'break-all',
           muted && 'text-muted-foreground',
         )}
       >

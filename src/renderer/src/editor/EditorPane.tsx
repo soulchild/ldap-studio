@@ -486,7 +486,7 @@ function ObjectClassTags({
           key={name}
           title={kind ? `${kind[0]?.toUpperCase()}${kind.slice(1)} object class` : 'Object class'}
           className={cn(
-            'h-5 shrink-0 rounded-sm border px-1.5 text-[0.6875rem] leading-[1.125rem] whitespace-nowrap',
+            'h-5 shrink-0 rounded-sm border px-1.5 text-[0.6875rem] leading-4.5 whitespace-nowrap',
             kind === 'structural' ? 'border-border-strong text-foreground' : 'text-muted-foreground',
           )}
         >
