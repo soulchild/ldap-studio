@@ -1,8 +1,8 @@
-# Checks, the test servers with integration and end-to-end tests (task 14.2), and the installers
-# for each platform, each installed and launched on a runner without Java (task 14.1).
+# Checks, and the test servers with integration and end-to-end tests (task 14.2).
 #
-# The release workflow (release.yml) runs this one with the version to build and the end-to-end
-# tests on, and publishes only if it passes.
+# The release workflow (release.yml) runs this one with the version to release. Only then does it
+# also build the installers for each platform, each installed and launched on a runner without
+# Java (task 14.1), and the release is published only if everything passes.
 #
 # The end-to-end tests are optional. They run when any of these holds:
 # - the workflow is started by hand (Actions → CI → Run workflow) with "Run the end-to-end tests",
@@ -94,6 +94,8 @@ jobs:
         run: pnpm test:env:down
 
   package:
+    # Only for releases: release.yml passes the version.
+    if: inputs.version
     strategy:
       fail-fast: false
       matrix:
