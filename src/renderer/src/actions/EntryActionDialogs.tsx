@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Dialog } from '@renderer/components/ui/dialog'
@@ -38,6 +38,8 @@ export function EntryActionDialogs(): React.JSX.Element | null {
       return <MoveDialog key={key} {...props} />
     case 'delete':
       return <DeleteDialog key={key} {...props} />
+    case 'reload':
+      return <ReloadDialog key={key} {...props} />
   }
 }
 
@@ -544,6 +546,59 @@ function MoveDialog({ request, onClose }: DialogProps): React.JSX.Element {
           </p>
         ) : null}
       </form>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Reload
+// ---------------------------------------------------------------------------
+
+/** Reads the entry again from the server; asks first if that would discard pending changes. */
+function ReloadDialog({ request, onClose }: DialogProps): React.JSX.Element | null {
+  const isOpen = useEditor(
+    (store) =>
+      store.entry?.connectionId === request.connectionId &&
+      store.entry.dn.toLowerCase() === request.dn.toLowerCase(),
+  )
+  // Read once: the request either reloads right away or waits for confirmation.
+  const [pending] = useState(() => (isOpen ? useEditor.getState().pendingChanges().length : 0))
+
+  const reload = () => {
+    onClose()
+    void useEditor.getState().open(request.connectionId, request.dn)
+  }
+
+  // Guards against a second run in development, where React runs effects twice.
+  const started = useRef(false)
+  useEffect(() => {
+    if (pending === 0 && !started.current) {
+      started.current = true
+      reload()
+    }
+    // Runs once per request; the dialog is keyed by it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (pending === 0) {
+    return null
+  }
+  return (
+    <Dialog
+      open
+      onOpenChange={(next) => !next && onClose()}
+      title="Discard changes and reload?"
+      description={`The entry has ${count.format(pending)} unsaved ${pending === 1 ? 'change' : 'changes'}. Reloading reads the entry again from the server and discards them.`}
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" autoFocus onClick={reload}>
+            Discard and reload
+          </Button>
+        </>
+      }
+    >
+      <p className="font-mono text-xs break-all text-muted-foreground">{request.dn}</p>
     </Dialog>
   )
 }
