@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { Attribute, Change, Client } from 'ldapts'
+import { startTcpProxy } from '../integration/tcp-proxy'
 import { goToDn, launchApp, relaunch, type LaunchedApp } from './app'
 import { OPENLDAP, testServersRunning } from './ldap-env'
 
@@ -452,6 +453,141 @@ test.describe('setting passwords (entry-editing spec)', () => {
     await setPassword().getByLabel('Confirm password').fill('pw')
     await setPassword().getByRole('button', { name: 'OK' }).click()
     await expect(attribute('userPassword')).toContainText('SSHA-512 password')
+  })
+})
+
+test.describe('multi-line values (entry-editing spec)', () => {
+  const sixLines = ['objectClass:', '  - posixAccount', 'uidNumber:', '  value: 1000', '  type: sub', 'end']
+  const description = () => valueInputs('description')
+
+  async function setDescription(values: string[]): Promise<void> {
+    await admin.modify(entryDn, [
+      new Change({ operation: 'replace', modification: new Attribute({ type: 'description', values }) }),
+    ])
+  }
+
+  test('shows multi-line values in text areas up to five lines high, and single lines in inputs', async () => {
+    await setDescription([sixLines.join('\n'), 'first\nsecond', 'just one line'])
+    await open(entryDn)
+    await expect(description()).toHaveCount(3)
+    const [six, two, one] = [description().nth(0), description().nth(1), description().nth(2)]
+    await expect(six).toHaveJSProperty('tagName', 'TEXTAREA')
+    await expect(six).toHaveValue(sixLines.join('\n'))
+    await expect(six).toHaveAttribute('rows', '5')
+    // Five lines show; the sixth needs scrolling.
+    expect(await six.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
+    await expect(two).toHaveJSProperty('tagName', 'TEXTAREA')
+    await expect(two).toHaveAttribute('rows', '2')
+    await expect(one).toHaveJSProperty('tagName', 'INPUT')
+  })
+
+  test('resizes a text area vertically only', async () => {
+    await setDescription(['first\nsecond'])
+    await open(entryDn)
+    const field = description()
+    expect(await field.evaluate((element) => getComputedStyle(element).resize)).toBe('vertical')
+    const before = await field.boundingBox()
+    if (!before) {
+      throw new Error('The text area is not visible.')
+    }
+    // Drag the resize handle in the bottom-right corner down and to the right.
+    await page.mouse.move(before.x + before.width - 3, before.y + before.height - 3)
+    await page.mouse.down()
+    await page.mouse.move(before.x + before.width + 60, before.y + before.height + 60, { steps: 5 })
+    await page.mouse.up()
+    const after = await field.boundingBox()
+    expect(after?.height).toBeGreaterThan(before.height + 40)
+    expect(after?.width).toBe(before.width)
+  })
+
+  test('saves an edited line and keeps the other lines and line breaks', async () => {
+    await setDescription(['line one\nline two\nline three', 'a\r\nb\r\nc'])
+    await open(entryDn)
+    await description().nth(0).fill('line one\nline 2\nline three')
+    // A text area hands back LF only; the value's CR LF must come back.
+    await description().nth(1).fill('a\nB\nc')
+    await editor().getByRole('button', { name: 'Review and save…' }).click()
+    await page
+      .getByRole('dialog', { name: 'Review changes' })
+      .getByRole('button', { name: 'Save changes' })
+      .click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    expect((await serverValues('description')).sort()).toEqual([
+      'a\r\nB\r\nc',
+      'line one\nline 2\nline three',
+    ])
+  })
+
+  test('keeps the text area and the focus when every line break is deleted', async () => {
+    await setDescription(['ab\ncd'])
+    await open(entryDn)
+    await description().fill('abcd')
+    await expect(description()).toHaveJSProperty('tagName', 'TEXTAREA')
+    await expect(description()).toBeFocused()
+    await page.keyboard.type('e')
+    await expect(description()).toHaveValue('abcde')
+  })
+
+  test('shows multi-line values in the change preview, each five lines high and scrollable', async () => {
+    const eightLines = (name: string) =>
+      Array.from({ length: 8 }, (_, index) => `${name} ${index + 1}`).join('\n')
+    await setDescription([eightLines('first'), eightLines('second')])
+    await open(entryDn)
+    await description().nth(0).fill(eightLines('changed first'))
+    await description().nth(1).fill(eightLines('changed second'))
+    await editor().getByRole('button', { name: 'Review and save…' }).click()
+    const preview = page.getByRole('dialog', { name: 'Review changes' })
+    const values = preview.getByRole('region', { name: 'description value' })
+    // Both values changed, so the preview lists one replace with the two new values.
+    await expect(values).toHaveCount(2)
+    for (const value of await values.all()) {
+      expect(await value.innerText()).toMatch(/ 1\n.* 2\n/)
+      const box = await value.evaluate((element) => ({
+        lines: element.clientHeight / parseFloat(getComputedStyle(element).lineHeight),
+        scrolls: element.scrollHeight > element.clientHeight,
+        focusable: element.tabIndex === 0,
+      }))
+      expect(box).toEqual({ lines: 5, scrolls: true, focusable: true })
+    }
+  })
+
+  test('shows a read-only multi-line value with its line breaks', async () => {
+    await setDescription([sixLines.join('\n')])
+    // Connect through a proxy the test can cut: a lost connection makes the entry read-only.
+    const proxy = await startTcpProxy(OPENLDAP.host, OPENLDAP.port)
+    try {
+      await page.evaluate(
+        async ({ port, server }) => {
+          await window.api.invoke('profiles.save', {
+            name: 'Proxied',
+            host: '127.0.0.1',
+            port,
+            security: 'none',
+            bindDn: server.adminDn,
+            baseDn: '',
+            caCertificates: [],
+            password: { action: 'set', value: server.adminPassword },
+          })
+        },
+        { port: proxy.port, server: OPENLDAP },
+      )
+      launched = await relaunch(launched)
+      page = launched.window
+      const row = page.getByRole('listitem', { name: 'Proxied' })
+      await row.getByRole('button', { name: 'Connect' }).click()
+      await expect(row).toHaveAttribute('data-status', 'connected')
+      await open(entryDn)
+      await expect(description()).toHaveJSProperty('tagName', 'TEXTAREA')
+
+      proxy.dropAll()
+
+      await expect(editor()).toContainText('cannot be changed until you reconnect')
+      await expect(description()).toHaveCount(0)
+      const shown = attribute('description').getByRole('row').first()
+      expect(await shown.innerText()).toBe(sixLines.join('\n'))
+    } finally {
+      await proxy.close()
+    }
   })
 })
 

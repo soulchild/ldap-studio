@@ -26,6 +26,7 @@ import type { SchemaModel } from '@shared/schema-model'
 import { AttributeTable } from './AttributeTable'
 import { changedAttributeCount } from './model'
 import { DnPath } from './DnPath'
+import { isMultiline, MAX_VISIBLE_LINES } from './multiline'
 
 /** Follows the tree selection of the active connection and shows that entry (entry-editing spec). */
 export function EditorPane(): React.JSX.Element {
@@ -370,11 +371,25 @@ function PreviewDialog({
                 <span className="text-muted-foreground"> (all values)</span>
               ) : (
                 <span className="mt-0.5 flex flex-col font-mono text-xs break-all text-muted-foreground">
-                  {change.values.map((value, valueIndex) => (
-                    <span key={valueIndex}>
-                      {typeof value === 'string' ? value : describeBinary(change.attribute, value)}
-                    </span>
-                  ))}
+                  {change.values.map((value, valueIndex) =>
+                    typeof value === 'string' && isMultiline(value) ? (
+                      // Its own scroll box, so several long values keep the preview readable.
+                      <span
+                        key={valueIndex}
+                        role="region"
+                        aria-label={`${change.attribute} value`}
+                        tabIndex={0}
+                        className="overflow-y-auto leading-4 wrap-break-word whitespace-pre-wrap focus-visible:outline-1 focus-visible:outline-primary"
+                        style={{ maxHeight: `${MAX_VISIBLE_LINES}lh` }}
+                      >
+                        {value}
+                      </span>
+                    ) : (
+                      <span key={valueIndex}>
+                        {typeof value === 'string' ? value : describeBinary(change.attribute, value)}
+                      </span>
+                    ),
+                  )}
                 </span>
               )}
             </span>
