@@ -11,8 +11,8 @@ const WEAK_LINUX_BACKENDS = new Set(['basic_text', 'unknown'])
 export default async function globalSetup(): Promise<void> {
   const launched = await launchApp()
   try {
-    const storage = await launched.app.evaluate(({ safeStorage }) => ({
-      available: safeStorage.isEncryptionAvailable(),
+    const storage = await launched.app.evaluate(async ({ safeStorage }) => ({
+      available: await safeStorage.isAsyncEncryptionAvailable(),
       backend: process.platform === 'linux' ? safeStorage.getSelectedStorageBackend() : undefined,
     }))
     if (!storage.available || (storage.backend !== undefined && WEAK_LINUX_BACKENDS.has(storage.backend))) {

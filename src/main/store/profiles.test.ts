@@ -81,13 +81,35 @@ describe('ProfileStore', () => {
       expect(await filesOnDisk()).not.toContain(PASSWORD)
     })
 
+    it('saves a password again when the keychain asks for it, e.g. after a key rotation', async () => {
+      const created = await store.save(input({ password: { action: 'set', value: PASSWORD } }))
+      const before = await filesOnDisk()
+      storage.keyVersion = 2
+      expect(await store.password(created.id)).toBe(PASSWORD)
+      const after = await filesOnDisk()
+      expect(after).not.toBe(before)
+      expect(after).toContain((await storage.encryptStringAsync(PASSWORD)).toString('base64'))
+      // Once saved with the current key, reading it changes nothing.
+      expect(await store.password(created.id)).toBe(PASSWORD)
+      expect(await filesOnDisk()).toBe(after)
+    })
+
+    it('still returns the password when saving it again fails', async () => {
+      const created = await store.save(input({ password: { action: 'set', value: PASSWORD } }))
+      const before = await filesOnDisk()
+      storage.keyVersion = 2
+      storage.available = false
+      expect(await store.password(created.id)).toBe(PASSWORD)
+      expect(await filesOnDisk()).toBe(before)
+    })
+
     it('never returns the password or its encrypted form to the renderer', async () => {
       const created = await store.save(input({ password: { action: 'set', value: PASSWORD } }))
       for (const profile of [created, ...(await store.list()), await store.get(created.id)]) {
         expect(profileSchema.strict().safeParse(profile).success).toBe(true)
         const serialized = JSON.stringify(profile)
         expect(serialized).not.toContain(PASSWORD)
-        expect(serialized).not.toContain(storage.encryptString(PASSWORD).toString('base64'))
+        expect(serialized).not.toContain((await storage.encryptStringAsync(PASSWORD)).toString('base64'))
       }
     })
 
@@ -106,7 +128,7 @@ describe('ProfileStore', () => {
     const created = await store.save(input({ password: { action: 'set', value: PASSWORD } }))
     await store.delete(created.id)
     expect(await store.list()).toEqual([])
-    expect(await filesOnDisk()).not.toContain(storage.encryptString(PASSWORD).toString('base64'))
+    expect(await filesOnDisk()).not.toContain((await storage.encryptStringAsync(PASSWORD)).toString('base64'))
   })
 
   it('duplicates settings under a distinct name, without the password', async () => {
