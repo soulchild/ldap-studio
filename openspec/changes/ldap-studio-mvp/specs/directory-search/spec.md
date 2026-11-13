@@ -69,7 +69,7 @@ Search results SHALL be shown in a table with the DN as the first column and one
 Activating a result row SHALL open that entry in the entry editor, and the user SHALL be able to reveal it in the tree.
 
 #### Scenario: Open result
-- **WHEN** the user double-clicks a result row
+- **WHEN** the user clicks a result row
 - **THEN** the entry editor shows that entry
 
 ### Requirement: Recent searches
