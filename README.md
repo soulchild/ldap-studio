@@ -52,11 +52,11 @@ On macOS the app is signed ad hoc (no Apple Developer account needed), so macOS 
 
 Windows and Linux installers can be built on a Mac.
 
-To check a build, `node test/package/launch.mjs <executable>` launches it and waits for the workspace. `sh test/package/linux-check.sh [arm64|amd64]` installs the Linux packages in a clean Debian container and launches them. Chromium does not run under Docker's x86 emulation, so on Apple Silicon only `arm64` works. CI (`.github/workflows/ci.yml`) builds and launches the installers on macOS, Windows and Linux runners.
+To check a build, `node test/package/launch.mjs <executable>` launches it and waits for the workspace. `sh test/package/linux-check.sh [arm64|amd64]` installs the Linux packages in a clean Debian container and launches them. Chromium does not run under Docker's x86 emulation, so on Apple Silicon only `arm64` works. The release workflow builds, installs and launches the installers on macOS, Windows and Linux runners (see [Releasing](#releasing)).
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` checks formatting, lint and types, runs the unit and integration tests, and builds, installs and launches the installers on macOS, Windows and Linux. The end-to-end tests are optional: they run when the workflow is started by hand (with "Run the end-to-end tests" ticked), when a pushed commit message contains `[e2e]`, when a pull request has the label `e2e`, or always if the repository variable `RUN_E2E` is `true`.
+`.github/workflows/ci.yml` checks formatting, lint and types, and runs the unit and integration tests. It builds the installers only for a release (see [Releasing](#releasing)). The end-to-end tests are optional: they run when the workflow is started by hand (with "Run the end-to-end tests" ticked), when a pushed commit message contains `[e2e]`, when a pull request has the label `e2e`, or always if the repository variable `RUN_E2E` is `true`.
 
 ## Releasing
 
