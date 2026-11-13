@@ -5,7 +5,7 @@
 # 2. Run CI (ci.yml) with that version and the end-to-end tests: checks, tests, and the installers
 #    for macOS, Windows and Linux, each installed and launched.
 # 3. Set the version in package.json, write CHANGELOG.md with git-cliff (cliff.toml), commit both
-#    as "Release <version>", and push the commit and the tag v<version> together.
+#    as "chore(release): <version>", and push the commit and the tag v<version> together.
 # 4. Publish the GitHub release with the installers and this version's changelog as its notes.
 #
 # If anything fails, nothing has been pushed: fix it and run the workflow again with the same
@@ -88,7 +88,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package.json CHANGELOG.md
-          git commit -m "Release $VERSION"
+          git commit -m "chore(release): $VERSION"
           git tag -a "v$VERSION" -m "LDAP Studio $VERSION"
           # Both or neither, and only if main is still at the commit CI tested.
           git push --atomic origin HEAD:refs/heads/main "refs/tags/v$VERSION"

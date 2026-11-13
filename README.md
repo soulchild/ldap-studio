@@ -60,9 +60,9 @@ To check a build, `node test/package/launch.mjs <executable>` launches it and wa
 
 ## Releasing
 
-Start a release in GitHub under Actions → Release → Run workflow, on `main`, with the new version (for example `1.2.0`; `1.2.0-beta.1` becomes a pre-release). `.github/workflows/release.yml` runs CI with that version and the end-to-end tests. Only if everything passes does it set the version in `package.json`, write `CHANGELOG.md`, commit both as "Release 1.2.0", push the commit with the tag `v1.2.0`, and publish a GitHub release with the installers and the version's changelog. If anything fails, nothing is pushed, and you can run it again with the same version.
+Start a release in GitHub under Actions → Release → Run workflow, on `main`, with the new version (for example `1.2.0`; `1.2.0-beta.1` becomes a pre-release). `.github/workflows/release.yml` runs CI with that version and the end-to-end tests. Only if everything passes does it set the version in `package.json`, write `CHANGELOG.md`, commit both as `chore(release): 1.2.0`, push the commit with the tag `v1.2.0`, and publish a GitHub release with the installers and the version's changelog. If anything fails, nothing is pushed, and you can run it again with the same version.
 
-The changelog is made by [git-cliff](https://git-cliff.org) from the commit subjects, grouped by their first word ("Add…" under Added, "Fix…" under Fixed, "Remove…" under Removed, the rest under Changed; see `cliff.toml`). Write subjects as they should read in the changelog. `pnpm changelog:preview` shows what the next release will list.
+The changelog is made by [git-cliff](https://git-cliff.org) from the commit messages, which follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (see `AGENTS.md`). It lists `feat` under Added, `fix` under Fixed, `perf` under Performance and `revert` under Reverted, and breaking changes of any type under their own heading. Other types are left out. Commits from before the switch are grouped by their first word (see `cliff.toml`). `pnpm changelog:preview` shows what the next release will list.
 
 The workflow pushes to `main` with the built-in `GITHUB_TOKEN`. If `main` is protected, allow GitHub Actions to push to it.
 

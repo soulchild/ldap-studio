@@ -1,6 +1,8 @@
 # git-cliff (https://git-cliff.org) writes CHANGELOG.md and the release notes from the commit
-# subjects. Commits are plain sentences, not Conventional Commits, so they are grouped by their
-# first word. Preview the next release with `pnpm changelog:preview`.
+# messages, which follow Conventional Commits (see AGENTS.md). Only feat, fix, perf and revert
+# commits are listed, plus breaking changes of any type under their own heading. Commits from
+# before the switch are plain sentences and are grouped by their first word. Preview the next
+# release with `pnpm changelog:preview`.
 
 [changelog]
 header = """
@@ -19,23 +21,33 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim }}
 {% for commit in commits %}
-- {{ commit.message | split(pat="\n") | first | trim }}\
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+{{ commit.message | split(pat="\n") | first | trim | upper_first }}\
 {% endfor %}
 {% endfor %}\n
 """
 trim = true
 
 [git]
-conventional_commits = false
+conventional_commits = true
+# Keeps the plain-sentence commits from before the switch.
 filter_unconventional = false
+# Lists breaking changes even when their type is otherwise left out.
+protect_breaking_commits = true
 commit_parsers = [
-  # The release workflow's own version bump.
+  { field = "breaking", pattern = "true", group = "<!-- 0 -->Breaking changes" },
+  { message = "^feat", group = "<!-- 1 -->Added" },
+  { message = "^fix", group = "<!-- 3 -->Fixed" },
+  { message = "^perf", group = "<!-- 4 -->Performance" },
+  { message = "^revert", group = "<!-- 6 -->Reverted" },
+  { message = "^(refactor|test|docs|build|ci|chore|style)", skip = true },
+  # Plain-sentence commits from before the switch, and the old release commits.
   { message = "^Release [0-9]", skip = true },
   { message = "^Initial commit", skip = true },
-  { message = "^(Add|Support|Allow|Offer|Introduce)\\b", group = "<!-- 0 -->Added" },
-  { message = "^Fix", group = "<!-- 2 -->Fixed" },
-  { message = "^(Remove|Drop)\\b", group = "<!-- 3 -->Removed" },
-  { message = ".*", group = "<!-- 1 -->Changed" },
+  { message = "^(Add|Support|Allow|Offer|Introduce)\\b", group = "<!-- 1 -->Added" },
+  { message = "^Fix", group = "<!-- 3 -->Fixed" },
+  { message = "^(Remove|Drop)\\b", group = "<!-- 5 -->Removed" },
+  { message = ".*", group = "<!-- 2 -->Changed" },
 ]
 filter_commits = false
 tag_pattern = "v[0-9].*"
