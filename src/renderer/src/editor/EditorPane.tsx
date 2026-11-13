@@ -237,6 +237,8 @@ export function EditorPane(): React.JSX.Element {
 
       <div className="min-h-0 flex-1 overflow-y-auto border-t">
         <AttributeTable
+          // Per entry, so collapsed attributes reset when another entry opens.
+          key={`${entry.connectionId}\n${entry.dn}`}
           connectionId={entry.connectionId}
           original={entry.original}
           working={entry.working}

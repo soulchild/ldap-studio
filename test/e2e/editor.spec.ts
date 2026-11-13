@@ -85,6 +85,33 @@ test.describe('viewing an entry (task 10.1)', () => {
     await expect(valueInputs('telephoneNumber')).toHaveCount(2)
   })
 
+  test('collapses attributes with more than 10 values to their count', async () => {
+    await admin.modify(entryDn, [
+      new Change({
+        operation: 'replace',
+        modification: new Attribute({
+          type: 'mail',
+          values: Array.from({ length: 11 }, (_, index) => `user${index}@example.com`),
+        }),
+      }),
+    ])
+    await open(entryDn)
+    const toggle = attribute('mail').getByRole('button', { name: 'Expand mail values' })
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(attribute('mail')).toContainText('11 values')
+    await expect(valueInputs('mail')).toHaveCount(0)
+    // Ten values or fewer stay expanded, without a toggle.
+    await expect(attribute('cn').getByRole('button', { name: /cn values/ })).toHaveCount(0)
+
+    await toggle.click()
+    await expect(valueInputs('mail')).toHaveCount(11)
+    await attribute('mail').getByRole('button', { name: 'Collapse mail values' }).click()
+    await expect(valueInputs('mail')).toHaveCount(0)
+    // The count expands it too.
+    await attribute('mail').getByRole('button', { name: '11 values' }).click()
+    await expect(valueInputs('mail')).toHaveCount(11)
+  })
+
   test('shows operational attributes on request, read-only', async () => {
     await open('uid=jdoe,ou=people,dc=example,dc=com')
     await expect(attribute('createTimestamp')).toHaveCount(0)
