@@ -328,6 +328,30 @@ test.describe('choosing DN values (entry-editing spec)', () => {
     await entries.getByRole('treeitem', { name: 'ou=people', exact: true }).dblclick()
     await expect(valueInputs('seeAlso')).toHaveValue('ou=people,dc=example,dc=com')
   })
+
+  test('searches every subtree from the chooser', async () => {
+    await open(entryDn)
+    await editor().getByRole('button', { name: 'Add attribute' }).click()
+    await editor().getByLabel('Attribute to add').fill('seeAlso')
+    await editor().getByLabel('Attribute to add').press('Enter')
+    await attribute('seeAlso').hover()
+    await attribute('seeAlso')
+      .getByRole('button', { name: 'Choose seeAlso value from the directory' })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'Choose seeAlso' })
+    const search = dialog.getByRole('searchbox', { name: 'Search all entries' })
+    await expect(search).toBeFocused()
+    await search.fill('asmit')
+    // The match is found below ou=people without expanding it, shown with the entries leading to it.
+    const matches = dialog.getByRole('tree', { name: 'Matching entries' })
+    await expect(matches.getByRole('treeitem', { name: 'uid=asmith', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await expect(matches.getByRole('treeitem', { name: 'ou=people', exact: true })).toBeVisible()
+    await search.press('Enter')
+    await expect(valueInputs('seeAlso')).toHaveValue('uid=asmith,ou=people,dc=example,dc=com')
+  })
 })
 
 test.describe('saving (task 10.3)', () => {

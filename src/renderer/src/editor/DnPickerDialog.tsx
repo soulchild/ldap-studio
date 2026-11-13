@@ -3,7 +3,9 @@ import { ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Dialog } from '@renderer/components/ui/dialog'
+import { Input } from '@renderer/components/ui/input'
 import { cn } from '@renderer/lib/utils'
+import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { useTree } from '@renderer/state/tree'
 import { EntryIcon } from '@renderer/tree/EntryIcon'
 import { entryKind } from '@renderer/tree/entry-kind'
@@ -19,11 +21,111 @@ import {
   startLoading,
   type Tree,
 } from '@renderer/tree/model'
+import { buildFilter, filterRows, toFilterMatch, type FilterMatch } from '@renderer/tree/quick-filter'
 import { readTreeNode } from '@renderer/tree/read-node'
 import { ancestorsOf, parseDn, serializeDn } from '@shared/dn'
 
 const ROW_HEIGHT = 28
 const INDENT = 16
+/** Matches per root; more are not useful in a picker, the user narrows the search instead. */
+const MAX_MATCHES = 200
+/** Typing pauses this long before the search runs. */
+const SEARCH_DELAY = 250
+
+interface Search {
+  status: 'running' | 'done' | 'error'
+  matches: FilterMatch[]
+  /** The server stopped before every match (size limit or a partial result). */
+  limited: boolean
+  error?: string
+}
+
+/**
+ * Searches the names (cn, uid, ou, …) below every root for `query`; undefined while there is
+ * no query. Each new query cancels the previous search.
+ */
+function useSubtreeSearch(connectionId: string, rootDns: string[], query: string): Search | undefined {
+  const model = (useSchema((store) => store.schemas[connectionId]) ?? NO_SCHEMA).model
+  const [search, setSearch] = useState<Search>()
+  const value = query.trim()
+  const filter = useMemo(
+    () => (value === '' ? undefined : buildFilter({ attribute: '', operator: 'contains', value }, model)),
+    [value, model],
+  )
+
+  useEffect(() => {
+    if (!filter) {
+      return
+    }
+    let stopped = false
+    const cancels: (() => void)[] = []
+    const fail = (message: string) => {
+      setSearch((current) => current && { ...current, status: 'error', error: message })
+    }
+    const timer = setTimeout(() => {
+      setSearch({ status: rootDns.length > 0 ? 'running' : 'done', matches: [], limited: false })
+      let open = rootDns.length
+      for (const base of rootDns) {
+        window.api
+          .stream(
+            'search.run',
+            { connectionId, base, scope: 'sub', filter, attributes: ['objectClass'], sizeLimit: MAX_MATCHES },
+            (event) => {
+              if (stopped) {
+                return
+              }
+              switch (event.kind) {
+                case 'page':
+                  setSearch(
+                    (current) =>
+                      current && {
+                        ...current,
+                        matches: current.matches.concat(event.data.entries.map(toFilterMatch)),
+                      },
+                  )
+                  break
+                case 'done':
+                  open--
+                  setSearch(
+                    (current) =>
+                      current && {
+                        ...current,
+                        limited: current.limited || event.data.sizeLimitReached || event.data.incomplete,
+                        status: current.status === 'running' && open === 0 ? 'done' : current.status,
+                      },
+                  )
+                  break
+                case 'error':
+                  if (event.error.kind !== 'cancelled') {
+                    fail(event.error.message)
+                  }
+                  break
+              }
+            },
+          )
+          .then((started) => {
+            if (stopped) {
+              started.cancel()
+            } else {
+              cancels.push(started.cancel)
+            }
+          })
+          .catch((error: unknown) => {
+            if (!stopped) {
+              fail((error as { message?: string }).message ?? 'The search failed.')
+            }
+          })
+      }
+    }, SEARCH_DELAY)
+    return () => {
+      stopped = true
+      clearTimeout(timer)
+      cancels.forEach((cancel) => cancel())
+    }
+  }, [connectionId, rootDns, filter])
+
+  return filter ? search : undefined
+}
 
 /**
  * Picks an entry from the directory for a DN-valued attribute (entry-editing spec: choose DN
@@ -49,6 +151,17 @@ export function DnPickerDialog({
   }, [connectionId])
   const [tree, setTree] = useState<Tree>(() => createTree(rootDns))
   const [selected, setSelected] = useState<string>()
+  const [query, setQuery] = useState('')
+  const search = useSubtreeSearch(connectionId, rootDns, query)
+  // While searching, the matches replace the tree and have a selection of their own, so
+  // clearing the search returns to where the tree was.
+  const found = useMemo(() => (search ? filterRows(search.matches, rootDns) : undefined), [search, rootDns])
+  const [foundSelected, setFoundSelected] = useState<string>()
+  useEffect(() => {
+    if (found && !found.some((row) => row.key === foundSelected)) {
+      setFoundSelected(found.find((row) => row.match)?.key)
+    }
+  }, [found, foundSelected])
   // The tree as of the last change, for loaders that outlive a render.
   const latest = useRef(tree)
   const cancels = useRef(new Set<() => void>())
@@ -168,25 +281,38 @@ export function DnPickerDialog({
   const nodeRows = rows.filter((row) => row.kind === 'node')
   const scroller = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
-    count: rows.length,
+    count: found ? found.length : rows.length,
     getScrollElement: () => scroller.current,
     estimateSize: () => ROW_HEIGHT,
     overscan: 12,
   })
-  const selectedIndex = rows.findIndex((row) => row.kind === 'node' && row.key === selected)
+  const selectedIndex = found
+    ? found.findIndex((row) => row.key === foundSelected)
+    : rows.findIndex((row) => row.kind === 'node' && row.key === selected)
   useEffect(() => {
     if (selectedIndex >= 0) {
       virtualizer.scrollToIndex(selectedIndex, { align: 'auto' })
     }
   }, [selectedIndex, virtualizer])
 
-  const selectedDn = selected ? tree.nodes[selected]?.dn : undefined
+  const selectedDn = found
+    ? found.find((row) => row.key === foundSelected)?.dn
+    : selected
+      ? tree.nodes[selected]?.dn
+      : undefined
   const choose = () => {
     if (selectedDn) {
       onChoose(selectedDn)
     }
   }
   const move = (offset: number) => {
+    if (found) {
+      const next = found[Math.min(Math.max(selectedIndex + offset, 0), found.length - 1)]
+      if (next) {
+        setFoundSelected(next.key)
+      }
+      return
+    }
     const position = nodeRows.findIndex((row) => row.key === selected)
     const next = nodeRows[Math.min(Math.max(position + offset, 0), nodeRows.length - 1)]
     if (next) {
@@ -216,14 +342,40 @@ export function DnPickerDialog({
         </>
       }
     >
+      <Input
+        type="search"
+        aria-label="Search all entries"
+        placeholder="Search all entries by name"
+        autoFocus
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => {
+          // The list follows the arrow keys while the search field keeps the focus.
+          switch (event.key) {
+            case 'ArrowDown':
+              event.preventDefault()
+              move(1)
+              break
+            case 'ArrowUp':
+              event.preventDefault()
+              move(-1)
+              break
+            case 'Enter':
+              event.preventDefault()
+              choose()
+              break
+          }
+        }}
+        className="mb-2"
+      />
       <div
         ref={scroller}
         role="tree"
-        aria-label="Entries to choose from"
+        aria-label={found ? 'Matching entries' : 'Entries to choose from'}
         tabIndex={0}
         aria-activedescendant={selected ? `picker-${selected}` : undefined}
         onKeyDown={(event) => {
-          const node = selected ? tree.nodes[selected] : undefined
+          const node = !found && selected ? tree.nodes[selected] : undefined
           switch (event.key) {
             case 'ArrowDown':
               event.preventDefault()
@@ -257,6 +409,46 @@ export function DnPickerDialog({
       >
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
           {virtualizer.getVirtualItems().map((item) => {
+            if (found) {
+              const match = found[item.index]
+              if (!match) {
+                return null
+              }
+              const isSelected = match.key === foundSelected
+              return (
+                <div
+                  key={match.key}
+                  className="absolute inset-x-0 px-2"
+                  style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
+                >
+                  <div
+                    id={`picker-${match.key}`}
+                    role="treeitem"
+                    aria-level={match.depth + 1}
+                    aria-selected={isSelected}
+                    aria-label={match.label}
+                    title={match.dn}
+                    onClick={() => setFoundSelected(match.key)}
+                    onDoubleClick={() => onChoose(match.dn)}
+                    className={cn(
+                      'flex h-full items-center gap-1 rounded-sm pr-2 text-sm',
+                      isSelected ? 'bg-selection-strong' : 'hover:bg-hover',
+                      !match.match && 'text-muted-foreground',
+                    )}
+                    // Same columns as the tree: the chevron's place (20) stays empty.
+                    style={{ paddingLeft: 8 + match.depth * INDENT + 24 }}
+                  >
+                    <EntryIcon
+                      kind={entryKind(match.objectClasses, match.label)}
+                      className={isSelected ? 'text-primary' : 'text-subtle-foreground'}
+                    />
+                    <span className={cn('min-w-0 flex-1 truncate', match.match && 'font-medium')}>
+                      {match.label}
+                    </span>
+                  </div>
+                </div>
+              )
+            }
             const row = rows[item.index]
             const node = row ? tree.nodes[row.key] : undefined
             if (!row || !node) {
@@ -338,6 +530,29 @@ export function DnPickerDialog({
           })}
         </div>
       </div>
+      {search ? <SearchStatus search={search} /> : null}
     </Dialog>
+  )
+}
+
+function SearchStatus({ search }: { search: Search }): React.JSX.Element {
+  const matches = search.matches.length
+  const text =
+    search.status === 'error'
+      ? search.error
+      : search.status === 'running'
+        ? 'Searching…'
+        : matches === 0
+          ? 'No entries match.'
+          : search.limited
+            ? `Showing the first ${matches} matches. Type more to narrow the search.`
+            : `${matches} ${matches === 1 ? 'match' : 'matches'}`
+  return (
+    <p
+      role="status"
+      className={cn('mt-2 text-xs', search.status === 'error' ? 'text-destructive' : 'text-muted-foreground')}
+    >
+      {text}
+    </p>
   )
 }

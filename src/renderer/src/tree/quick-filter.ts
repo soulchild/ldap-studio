@@ -5,6 +5,7 @@
  */
 import { escapeFilterValue } from '@shared/filter'
 import { ancestorsOf, parseDn, serializeDn, serializeRdn } from '@shared/dn'
+import type { SearchEntry } from '@shared/ipc'
 import type { SchemaModel } from '@shared/schema-model'
 import { keyOf } from './model'
 
@@ -84,6 +85,16 @@ export function buildFilter(input: QuickFilter, schema?: SchemaModel): string | 
 export interface FilterMatch {
   dn: string
   objectClasses: string[]
+}
+
+/** A search result, read with `attributes: ['objectClass']`, as a match. */
+export function toFilterMatch(entry: SearchEntry): FilterMatch {
+  return {
+    dn: entry.dn,
+    objectClasses: (
+      entry.attributes.find((attribute) => attribute.name.toLowerCase() === 'objectclass')?.values ?? []
+    ).filter((value): value is string => typeof value === 'string'),
+  }
 }
 
 export interface FilterRow {
