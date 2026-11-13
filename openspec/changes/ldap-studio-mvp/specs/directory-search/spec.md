@@ -13,9 +13,9 @@ A search SHALL take a filter, a base DN, a scope (base, one level, or subtree), 
 - **WHEN** the user opens the search view while "ou=people,dc=example,dc=com" is selected
 - **THEN** the base DN is prefilled with "ou=people,dc=example,dc=com" and the scope is subtree
 
-#### Scenario: Pick base from tree
-- **WHEN** the user uses the base DN picker and selects a node in the tree
-- **THEN** that node's DN becomes the base DN
+#### Scenario: Choose base from the directory
+- **WHEN** the user browses for the base DN and chooses an entry in the dialog, found by expanding the tree or by searching all subtrees
+- **THEN** that entry's DN becomes the base DN
 
 ### Requirement: Filter validation
 The application SHALL check the filter syntax as the user types and SHALL point out the position of a syntax error. A search with an invalid filter SHALL NOT be sent to the server.
