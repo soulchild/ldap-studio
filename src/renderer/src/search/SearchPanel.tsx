@@ -381,7 +381,7 @@ function ResultsTable(): React.JSX.Element {
           </span>
         ))}
       </div>
-      <div ref={scroller} className="selectable min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
           {virtualizer.getVirtualItems().map((item) => {
             const entry = rows[item.index]
@@ -406,13 +406,13 @@ function ResultsTable(): React.JSX.Element {
                   tabIndex={0}
                   aria-rowindex={item.index + 1}
                   aria-label={entry.dn}
-                  onDoubleClick={() => void openResult(connectionId, entry.dn)}
+                  onClick={() => void openResult(connectionId, entry.dn)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       void openResult(connectionId, entry.dn)
                     }
                   }}
-                  className="absolute inset-x-0 grid items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
+                  className="absolute inset-x-0 grid cursor-pointer items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"
                   style={{ ...template, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                 >
                   <span role="cell" className="flex min-w-0 items-center gap-2" title={entry.dn}>

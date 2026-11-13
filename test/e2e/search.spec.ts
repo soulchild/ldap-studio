@@ -186,7 +186,7 @@ test.describe('results (task 13.2)', () => {
     await runSearch()
     await results()
       .getByRole('row', { name: /^uid=jdoe/ })
-      .dblclick()
+      .click()
     await expect(
       page.getByRole('region', { name: 'Entry' }).getByRole('heading', { name: 'jdoe' }),
     ).toBeVisible()
