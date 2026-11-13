@@ -1,4 +1,4 @@
-import { Asterisk, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
+import { Asterisk, ChevronRight, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
@@ -20,6 +20,10 @@ import {
 import { BinaryValue } from './BinaryValue'
 import { DnPickerDialog } from './DnPickerDialog'
 import { suggestedFileName } from './file-names'
+
+/** Attributes with more values than this start collapsed to a value count. */
+const COLLAPSE_ABOVE = 10
+const count = new Intl.NumberFormat()
 
 const actionButton =
   'flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover hover:text-foreground'
@@ -51,6 +55,12 @@ export function AttributeTable({
 }): React.JSX.Element {
   const [focusTarget, setFocusTarget] = useState<string>()
   const [picking, setPicking] = useState<{ attribute: string; index: number; value: string }>()
+  // Collapse state the user chose, by lowercased attribute name; otherwise the default applies.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const isCollapsed = (name: string, values: number) =>
+    values > COLLAPSE_ABOVE && !(expanded[name.toLowerCase()] ?? false)
+  const setCollapsed = (name: string, collapsed: boolean) =>
+    setExpanded((current) => ({ ...current, [name.toLowerCase()]: !collapsed }))
   // File dialogs are asynchronous: apply their result to the latest working copy, not the one
   // from the render that opened the dialog.
   const workingRef = useRef(working)
@@ -81,6 +91,8 @@ export function AttributeTable({
         const isRequired = group === 'required' || group === 'objectClass'
         // A lost connection makes the whole entry read-only; a banner says so, not every row.
         const lockedBySchema = locked && !readOnly
+        const collapsible = attribute.values.length > COLLAPSE_ABOVE
+        const collapsed = isCollapsed(attribute.name, attribute.values.length)
         return (
           <div
             key={attribute.name}
@@ -114,6 +126,18 @@ export function AttributeTable({
                 <span className="truncate" title={attribute.name}>
                   {attribute.name}
                 </span>
+                {collapsible ? (
+                  <button
+                    type="button"
+                    className="-my-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover hover:text-foreground"
+                    aria-expanded={!collapsed}
+                    aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${attribute.name} values`}
+                    title={collapsed ? 'Show values' : 'Hide values'}
+                    onClick={() => setCollapsed(attribute.name, !collapsed)}
+                  >
+                    <ChevronRight className={cn('size-3.5 transition-transform', !collapsed && 'rotate-90')} />
+                  </button>
+                ) : null}
                 {changed ? (
                   <span
                     className="size-1.5 shrink-0 rounded-full bg-primary"
@@ -130,6 +154,7 @@ export function AttributeTable({
                       aria-label={`Add ${attribute.name} value`}
                       title="Add value"
                       onClick={async () => {
+                        setCollapsed(attribute.name, false)
                         if (isBinary(attribute.name)) {
                           const bytes = await chooseFile()
                           if (bytes) {
@@ -156,7 +181,20 @@ export function AttributeTable({
               </span>
             </div>
             <div className="flex min-w-0 flex-col">
-              {attribute.values.map((value, index) => {
+              {collapsed ? (
+                <div role="row" className="py-0.5">
+                  <div role="cell">
+                    <button
+                      type="button"
+                      className="flex h-7 items-center rounded-sm px-2.5 text-sm text-muted-foreground hover:bg-hover hover:text-foreground"
+                      onClick={() => setCollapsed(attribute.name, false)}
+                    >
+                      {count.format(attribute.values.length)} values
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {(collapsed ? [] : attribute.values).map((value, index) => {
                 const fresh = isNewValue(original, attribute.name, value)
                 const inputId = `${attribute.name}-${index}`
                 return (
@@ -277,6 +315,9 @@ export function AttributeTable({
           options={addableAttributes(working, schema)}
           onAdd={async (name) => {
             const existing = working.find((attribute) => attribute.name.toLowerCase() === name.toLowerCase())
+            if (existing) {
+              setCollapsed(existing.name, false)
+            }
             if (isBinary(name)) {
               // Binary attributes get their value from a file.
               const bytes = await chooseFile()
