@@ -137,14 +137,14 @@ export function SearchPanel(): React.JSX.Element {
               onChange={(event) => search.setParams({ base: event.target.value })}
               className="h-7 min-w-0 flex-1 rounded-sm border border-input bg-surface px-2 font-mono text-xs text-foreground focus-visible:border-primary focus-visible:outline-none"
             />
-            <button
-              type="button"
+            <Button
+              variant="quiet"
+              size="sm"
               title="Choose the base from the directory"
               onClick={() => setBrowsing(true)}
-              className="flex h-7 items-center gap-1 rounded-sm px-2 text-xs hover:bg-hover hover:text-foreground"
             >
               <FolderTree className="size-3.5" /> Browse…
-            </button>
+            </Button>
           </label>
           {browsing ? (
             <DnPickerDialog
@@ -217,13 +217,9 @@ function RecentSearches({ profileId }: { profileId: string }): React.JSX.Element
     <DropdownMenu
       label="Recent searches"
       trigger={
-        <button
-          type="button"
-          disabled={recent.length === 0}
-          className="flex h-7 items-center gap-1 rounded-sm px-2 text-xs hover:bg-hover hover:text-foreground disabled:opacity-40"
-        >
+        <Button variant="quiet" size="sm" disabled={recent.length === 0} className="disabled:opacity-40">
           <History className="size-3.5" /> Recent
-        </button>
+        </Button>
       }
       items={recent.map((item) => ({
         label: `${item.filter} in ${item.base || 'the root'}`,
