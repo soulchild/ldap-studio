@@ -1,10 +1,11 @@
-import { Asterisk, ChevronRight, Download, FolderTree, Lock, Plus, Upload, X } from 'lucide-react'
+import { Asterisk, ChevronRight, Download, FolderTree, KeyRound, Lock, Plus, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
 import { CopyButton } from '@renderer/components/CopyButton'
 import { cn } from '@renderer/lib/utils'
 import type { AttributeValue } from '@shared/entry'
+import { describePassword, isPasswordAttribute } from '@shared/password'
 import type { SchemaModel } from '@shared/schema-model'
 import {
   addableAttributes,
@@ -19,6 +20,7 @@ import {
 } from './model'
 import { BinaryValue } from './BinaryValue'
 import { DnPickerDialog } from './DnPickerDialog'
+import { PasswordDialog } from './PasswordDialog'
 import { suggestedFileName } from './file-names'
 
 /** Attributes with more values than this start collapsed to a value count. */
@@ -55,6 +57,8 @@ export function AttributeTable({
 }): React.JSX.Element {
   const [focusTarget, setFocusTarget] = useState<string>()
   const [picking, setPicking] = useState<{ attribute: string; index: number; value: string }>()
+  // The password value being set: an existing one by index, or a new one without.
+  const [settingPassword, setSettingPassword] = useState<{ attribute: string; index?: number }>()
   // Collapse state the user chose, by lowercased attribute name; otherwise the default applies.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const isCollapsed = (name: string, values: number) =>
@@ -135,7 +139,9 @@ export function AttributeTable({
                     title={collapsed ? 'Show values' : 'Hide values'}
                     onClick={() => setCollapsed(attribute.name, !collapsed)}
                   >
-                    <ChevronRight className={cn('size-3.5 transition-transform', !collapsed && 'rotate-90')} />
+                    <ChevronRight
+                      className={cn('size-3.5 transition-transform', !collapsed && 'rotate-90')}
+                    />
                   </button>
                 ) : null}
                 {changed ? (
@@ -155,6 +161,10 @@ export function AttributeTable({
                       title="Add value"
                       onClick={async () => {
                         setCollapsed(attribute.name, false)
+                        if (isPasswordAttribute(attribute.name)) {
+                          setSettingPassword({ attribute: attribute.name })
+                          return
+                        }
                         if (isBinary(attribute.name)) {
                           const bytes = await chooseFile()
                           if (bytes) {
@@ -226,7 +236,19 @@ export function AttributeTable({
                           <FolderTree className="size-3.5" />
                         </button>
                       ) : null}
-                      {typeof value === 'string' ? (
+                      {isPasswordAttribute(attribute.name) ? (
+                        !locked ? (
+                          <button
+                            type="button"
+                            className={actionButton}
+                            aria-label={`Set ${attribute.name} value`}
+                            title="Set password…"
+                            onClick={() => setSettingPassword({ attribute: attribute.name, index })}
+                          >
+                            <KeyRound className="size-3.5" />
+                          </button>
+                        ) : null
+                      ) : typeof value === 'string' ? (
                         <CopyButton label={`Copy ${attribute.name} value`} className="size-7" text={value} />
                       ) : (
                         <>
@@ -318,6 +340,10 @@ export function AttributeTable({
             if (existing) {
               setCollapsed(existing.name, false)
             }
+            if (isPasswordAttribute(name)) {
+              setSettingPassword({ attribute: existing?.name ?? name })
+              return
+            }
             if (isBinary(name)) {
               // Binary attributes get their value from a file.
               const bytes = await chooseFile()
@@ -334,6 +360,26 @@ export function AttributeTable({
             }
             setFocusTarget(`${existing?.name ?? name}-${existing ? existing.values.length : 0}`)
             onChange(addAttribute(working, existing?.name ?? name))
+          }}
+        />
+      ) : null}
+      {settingPassword ? (
+        <PasswordDialog
+          onCancel={() => setSettingPassword(undefined)}
+          onSet={(text) => {
+            const { attribute: name, index } = settingPassword
+            // Stored as bytes where the schema says the attribute is binary (Octet String).
+            const value = isBinary(name) ? new TextEncoder().encode(text) : text
+            const current = latest()
+            const present = current.find((attribute) => attribute.name.toLowerCase() === name.toLowerCase())
+            onChange(
+              index !== undefined
+                ? setValue(current, name, index, value)
+                : present
+                  ? addValue(current, present.name, value)
+                  : [...current, { name, values: [value] }],
+            )
+            setSettingPassword(undefined)
           }}
         />
       ) : null}
@@ -371,6 +417,14 @@ function ValueField({
   autoFocus: boolean
   onChange: (value: string) => void
 }): React.JSX.Element {
+  if (isPasswordAttribute(name)) {
+    // Never shown, even hashed: only how it is stored.
+    return (
+      <span className="flex min-h-7 min-w-0 flex-1 items-center px-2.5 text-sm text-muted-foreground">
+        {describePassword(value)} password
+      </span>
+    )
+  }
   if (typeof value !== 'string') {
     return <BinaryValue attribute={name} bytes={value} />
   }

@@ -164,6 +164,28 @@ For each binary value the user SHALL be able to save it to a file and replace it
 - **WHEN** the user saves a "userCertificate" value to a file
 - **THEN** the file contains exactly the stored bytes
 
+### Requirement: Password values are not shown
+For "userPassword" the editor SHALL show only each value's hash method, never the value, and SHALL offer no file import or export.
+
+#### Scenario: Hashed password
+- **WHEN** an entry with a "{SSHA}" password is opened
+- **THEN** the value reads "SSHA password"
+
+### Requirement: Set password values
+The user SHALL set a "userPassword" value in a dialog that takes the new password twice, hashes it with a chosen method, and previews the value to be stored. The methods SHALL be SSHA-512 (the default), SSHA-384, SSHA-256, SSHA, SHA-512, SHA-384, SHA-256, SHA, PKCS5S2, and Plaintext; the editor SHALL NOT check which of them the server supports. Setting a password SHALL be a pending change like any other edit.
+
+#### Scenario: Set a new password
+- **WHEN** the user sets a "userPassword" value to a new password with SSHA and saves
+- **THEN** the server stores a "{SSHA}" value and accepts a bind with the new password
+
+#### Scenario: Passwords do not match
+- **WHEN** the confirmation differs from the new password
+- **THEN** the dialog says so and the password cannot be set
+
+#### Scenario: Add a password
+- **WHEN** the user adds "userPassword" to an entry
+- **THEN** the password dialog opens, and cancelling it adds nothing
+
 ### Requirement: Copy values
 The user SHALL be able to copy a text value, or an attribute with all its values, to the clipboard.
 
