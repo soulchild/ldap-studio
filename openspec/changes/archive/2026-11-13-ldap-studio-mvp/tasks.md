@@ -95,7 +95,7 @@
 
 ## 14. Packaging and integration checks
 
-- [ ] 14.1 Configure electron-builder for macOS dmg, Windows NSIS, and Linux AppImage/deb (unsigned); verify each build artifact installs and launches on a machine without Java
-- [ ] 14.2 Add an end-to-end Playwright smoke test (create profile → connect → expand → edit and save → search → toggle theme) running in CI with the test containers; verify the CI run passes
+- [x] 14.1 Configure electron-builder for macOS dmg, Windows NSIS, and Linux AppImage/deb (unsigned); verify each build artifact installs and launches on a machine without Java
+- [x] 14.2 Add an end-to-end Playwright smoke test (create profile → connect → expand → edit and save → search → toggle theme) running in CI with the test containers; verify the CI run passes
 - [ ] 14.3 Write and run a manual Active Directory checklist (simple bind over LDAPS, 1,000-entry paging, objectGUID/objectSid display, Tree Delete, schema load); verify by recording the results in `docs/ad-checklist.md`
 - [x] 14.4 Run `openspec validate ldap-studio-mvp --strict` and confirm every spec scenario is covered by a test or checklist item; verify the command passes
