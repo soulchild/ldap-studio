@@ -1,8 +1,12 @@
 # Checks, the test servers with integration and end-to-end tests (task 14.2), and the installers
 # for each platform, each installed and launched on a runner without Java (task 14.1).
 #
+# The release workflow (release.yml) runs this one with the version to build and the end-to-end
+# tests on, and publishes only if it passes.
+#
 # The end-to-end tests are optional. They run when any of these holds:
 # - the workflow is started by hand (Actions → CI → Run workflow) with "Run the end-to-end tests",
+#   or run by the release workflow,
 # - a pushed commit's message contains "[e2e]",
 # - a pull request has the label "e2e",
 # - the repository variable RUN_E2E is "true" (Settings → Secrets and variables → Actions).
@@ -18,6 +22,15 @@ on:
         description: Run the end-to-end tests
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      e2e:
+        type: boolean
+        default: true
+      version:
+        description: The version to build the installers with, instead of the one in package.json
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -27,7 +40,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      RUN_E2E: ${{ (github.event_name == 'workflow_dispatch' && inputs.e2e) || contains(github.event.head_commit.message, '[e2e]') || contains(github.event.pull_request.labels.*.name, 'e2e') || vars.RUN_E2E == 'true' }}
+      RUN_E2E: ${{ inputs.e2e == true || contains(github.event.head_commit.message, '[e2e]') || contains(github.event.pull_request.labels.*.name, 'e2e') || vars.RUN_E2E == 'true' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -89,6 +102,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Set the release version
+        if: inputs.version != ''
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+        run: npm pkg set version="$VERSION"
       - run: pnpm build
       - run: pnpm exec electron-builder ${{ matrix.build }} --publish never
       - name: Install from the DMG and launch (macOS)
