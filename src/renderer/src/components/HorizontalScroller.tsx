@@ -10,10 +10,13 @@ const FADE = '1rem'
 export function HorizontalScroller({
   label,
   className,
+  startAtEnd = false,
   children,
 }: {
   label: string
   className?: string
+  /** Starts scrolled to the end, such as for a path whose last segment matters most. */
+  startAtEnd?: boolean
   children: ReactNode
 }): React.JSX.Element {
   const list = useRef<HTMLUListElement>(null)
@@ -46,12 +49,17 @@ export function HorizontalScroller({
     resize.observe(element)
     element.addEventListener('scroll', measure, { passive: true })
     element.addEventListener('wheel', onWheel, { passive: false })
+    if (startAtEnd) {
+      element.scrollLeft = element.scrollWidth
+    }
     measure()
     return () => {
       resize.disconnect()
       element.removeEventListener('scroll', measure)
       element.removeEventListener('wheel', onWheel)
     }
+    // Only on mount: scrolling back to the end on every render would fight the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const mask =
