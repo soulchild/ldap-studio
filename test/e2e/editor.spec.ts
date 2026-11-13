@@ -381,6 +381,80 @@ test.describe('choosing DN values (entry-editing spec)', () => {
   })
 })
 
+test.describe('setting passwords (entry-editing spec)', () => {
+  const setPassword = () => page.getByRole('dialog', { name: 'Set password' })
+
+  test('hashes a new password that the server then accepts for binding', async () => {
+    await admin.modify(entryDn, [
+      new Change({
+        operation: 'add',
+        modification: new Attribute({ type: 'userPassword', values: ['old-pw'] }),
+      }),
+    ])
+    await open(entryDn)
+    const password = attribute('userPassword')
+    await expect(password).toContainText('Plaintext password')
+    await password.hover()
+    // Passwords are set, not uploaded or downloaded.
+    await expect(password.getByRole('button', { name: /file/ })).toHaveCount(0)
+    await password.getByRole('button', { name: 'Set userPassword value' }).click()
+
+    const dialog = setPassword()
+    const ok = dialog.getByRole('button', { name: 'OK' })
+    await expect(dialog.getByLabel('Hash method')).toHaveValue('SSHA-512')
+    await dialog.getByLabel('New password', { exact: true }).fill('new-pw')
+    await dialog.getByLabel('Confirm password').fill('new-px')
+    await expect(dialog).toContainText('The passwords do not match.')
+    await expect(ok).toBeDisabled()
+    await dialog.getByLabel('Confirm password').fill('new-pw')
+    await expect(ok).toBeEnabled()
+
+    // The test server supports only the SHA-1 schemes.
+    await dialog.getByLabel('Hash method').selectOption('SSHA')
+    const stored = dialog.getByLabel('Stored value')
+    await expect(stored).toHaveValue(/^\{SSHA\}/)
+    const first = await stored.inputValue()
+    await dialog.getByRole('button', { name: 'New salt' }).click()
+    await expect(stored).not.toHaveValue(first)
+    await ok.click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(password).toContainText('SSHA password')
+    await expect(password.getByRole('img', { name: 'Changed' })).toBeVisible()
+
+    await editor().getByRole('button', { name: 'Review and save…' }).click()
+    await page
+      .getByRole('dialog', { name: 'Review changes' })
+      .getByRole('button', { name: 'Save changes' })
+      .click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    expect(await serverValues('userPassword')).toEqual([expect.stringMatching(/^\{SSHA\}/)])
+    const user = new Client({ url: `ldap://${OPENLDAP.host}:${OPENLDAP.port}` })
+    try {
+      await user.bind(entryDn, 'new-pw')
+    } finally {
+      await user.unbind()
+    }
+  })
+
+  test('asks for the password when the attribute is added, and adds nothing on cancel', async () => {
+    await open(entryDn)
+    const addAttribute = async () => {
+      await editor().getByRole('button', { name: 'Add attribute' }).click()
+      await editor().getByRole('combobox', { name: 'Attribute to add' }).fill('userPassword')
+      await editor().getByRole('button', { name: 'Add', exact: true }).click()
+    }
+    await addAttribute()
+    await setPassword().getByRole('button', { name: 'Cancel' }).click()
+    await expect(attribute('userPassword')).toHaveCount(0)
+
+    await addAttribute()
+    await setPassword().getByLabel('New password', { exact: true }).fill('pw')
+    await setPassword().getByLabel('Confirm password').fill('pw')
+    await setPassword().getByRole('button', { name: 'OK' }).click()
+    await expect(attribute('userPassword')).toContainText('SSHA-512 password')
+  })
+})
+
 test.describe('saving (task 10.3)', () => {
   test('previews the changes and saves them as one modify', async () => {
     await open(entryDn)

@@ -85,6 +85,7 @@
 
 - [x] 12.1 Implement type-aware binary display (image thumbnail via blob URL, certificate details via main `X509Certificate`, AD GUID/SID strings, hex preview with size); verify against seeded jpegPhoto and userCertificate entries and unit-tested AD fixtures
 - [x] 12.2 Implement save-to-file, replace-from-file, and add-value-from-file through main-owned dialogs; verify integration tests that the bytes round-trip identically and that editing another attribute leaves jpegPhoto byte-identical
+- [x] 12.3 Add the password dialog for `userPassword` (hash method shown instead of the value; SSHA/SHA-2/PKCS5S2/Plaintext hashing in `shared/password` with Web Crypto, no weak methods); verify unit tests against hashlib reference values and a Playwright test that sets an SSHA password, saves, and binds with it
 
 ## 13. Search
 
