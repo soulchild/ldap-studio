@@ -7,11 +7,18 @@ import { StorageError } from './json-store'
 
 /** The part of Electron's `safeStorage` we use; injectable for tests. */
 export interface SafeStorageLike {
-  isEncryptionAvailable(): boolean
-  encryptString(plainText: string): Buffer
-  decryptString(encrypted: Buffer): string
+  isAsyncEncryptionAvailable(): Promise<boolean>
+  encryptStringAsync(plainText: string): Promise<Buffer>
+  /** Also decrypts what the deprecated synchronous `encryptString` stored. */
+  decryptStringAsync(encrypted: Buffer): Promise<{ result: string; shouldReEncrypt: boolean }>
   /** Linux only. `basic_text` means a hard-coded key, which is obfuscation rather than encryption. */
   getSelectedStorageBackend?(): string
+}
+
+export interface Decrypted {
+  plainText: string
+  /** The key has changed since, e.g. after a rotation: store the password again with `encrypt`. */
+  shouldReEncrypt: boolean
 }
 
 export interface SecretAvailability {
@@ -27,8 +34,8 @@ export class SecretBox {
     private readonly platform: NodeJS.Platform = process.platform,
   ) {}
 
-  availability(): SecretAvailability {
-    if (!this.safeStorage.isEncryptionAvailable()) {
+  async availability(): Promise<SecretAvailability> {
+    if (!(await this.safeStorage.isAsyncEncryptionAvailable())) {
       return {
         available: false,
         reason:
@@ -49,17 +56,20 @@ export class SecretBox {
   }
 
   /** Returns the encrypted password as base64. Throws `StorageError` if it cannot be stored securely. */
-  encrypt(plainText: string): string {
-    const { available, reason } = this.availability()
+  async encrypt(plainText: string): Promise<string> {
+    const { available, reason } = await this.availability()
     if (!available) {
       throw new StorageError(reason)
     }
-    return this.safeStorage.encryptString(plainText).toString('base64')
+    return (await this.safeStorage.encryptStringAsync(plainText)).toString('base64')
   }
 
-  decrypt(encrypted: string): string {
+  async decrypt(encrypted: string): Promise<Decrypted> {
     try {
-      return this.safeStorage.decryptString(Buffer.from(encrypted, 'base64'))
+      const { result, shouldReEncrypt } = await this.safeStorage.decryptStringAsync(
+        Buffer.from(encrypted, 'base64'),
+      )
+      return { plainText: result, shouldReEncrypt }
     } catch {
       throw new StorageError(
         'The saved password could not be decrypted, for example because the keychain changed. Enter the password again.',

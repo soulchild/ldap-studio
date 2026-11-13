@@ -57,7 +57,7 @@ export class ProfileStore {
     }
     if (password.action === 'set') {
       // Encrypt before changing anything, so a refusal leaves the stored profile as it was.
-      stored.encryptedPassword = this.secrets.encrypt(password.value)
+      stored.encryptedPassword = await this.secrets.encrypt(password.value)
     } else if (password.action === 'keep' && existing?.encryptedPassword) {
       stored.encryptedPassword = existing.encryptedPassword
     }
@@ -96,16 +96,25 @@ export class ProfileStore {
   /** Saves or replaces just the password, e.g. when the user ticks "save password" in the prompt. */
   async savePassword(id: string, password: string): Promise<void> {
     const source = await this.find(id)
-    const updated = { ...source, encryptedPassword: this.secrets.encrypt(password) }
+    const updated = { ...source, encryptedPassword: await this.secrets.encrypt(password) }
     await this.persist((await this.load()).map((profile) => (profile.id === id ? updated : profile)))
   }
 
-  /** The decrypted password for connecting, if one is saved. Main process only. */
+  /**
+   * The decrypted password for connecting, if one is saved. Main process only. When the keychain
+   * asks for it, e.g. after a key rotation, the password is saved again with the current key.
+   */
   async password(id: string): Promise<string | undefined> {
     const profile = await this.find(id)
-    return profile.encryptedPassword === undefined
-      ? undefined
-      : this.secrets.decrypt(profile.encryptedPassword)
+    if (profile.encryptedPassword === undefined) {
+      return undefined
+    }
+    const { plainText, shouldReEncrypt } = await this.secrets.decrypt(profile.encryptedPassword)
+    if (shouldReEncrypt) {
+      // The old ciphertext still decrypts, so failing to replace it must not stop the connection.
+      await this.savePassword(id, plainText).catch(() => undefined)
+    }
+    return plainText
   }
 
   private async find(id: string): Promise<StoredProfile> {
