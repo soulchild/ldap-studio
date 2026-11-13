@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react'
+import { HorizontalScroller } from '@renderer/components/HorizontalScroller'
 import { keyOf } from '@renderer/tree/model'
 import { ancestorsOf, parseDn, serializeDn, serializeRdn } from '@shared/dn'
 
@@ -26,37 +27,37 @@ export function DnPath({
   const levels = rootIndex > 0 ? all.slice(rootIndex) : all
   return (
     // Every segment has the same padding; the negative margin lines the first one up with the text below.
-    <nav
-      aria-label="Entry path"
-      className="-ml-1 flex min-w-0 flex-1 flex-wrap items-center gap-x-0.5 gap-y-0.5 text-xs"
-    >
-      {levels.map((level, index) => {
-        // The root segment is the whole root DN, e.g. dc=example,dc=com.
-        const rdn = index === 0 && rootIndex > 0 ? serializeDn(level) : serializeRdn(level[0] ?? [])
-        const isLast = index === levels.length - 1
-        const label = <SegmentLabel rdn={rdn} />
-        return (
-          <span key={index} className="flex min-w-0 items-center gap-1">
-            {index > 0 ? (
-              <ChevronRight className="size-3 shrink-0 text-subtle-foreground" aria-hidden />
-            ) : null}
-            {isLast ? (
-              <span aria-current="page" className="truncate px-1 py-0.5">
-                {label}
-              </span>
-            ) : (
-              <button
-                type="button"
-                title={serializeDn(level)}
-                onClick={() => onOpen(serializeDn(level))}
-                className="truncate rounded-sm px-1 py-0.5 hover:bg-hover"
-              >
-                {label}
-              </button>
-            )}
-          </span>
-        )
-      })}
+    <nav aria-label="Entry path" className="-ml-1 flex min-w-0 flex-1 text-xs">
+      {/* Keyed by DN so another entry starts scrolled to its own last segment. */}
+      <HorizontalScroller key={dn} label="Path segments" startAtEnd className="items-center gap-0.5">
+        {levels.map((level, index) => {
+          // The root segment is the whole root DN, e.g. dc=example,dc=com.
+          const rdn = index === 0 && rootIndex > 0 ? serializeDn(level) : serializeRdn(level[0] ?? [])
+          const isLast = index === levels.length - 1
+          const label = <SegmentLabel rdn={rdn} />
+          return (
+            <li key={index} className="flex shrink-0 items-center gap-1 whitespace-nowrap">
+              {index > 0 ? (
+                <ChevronRight className="size-3 shrink-0 text-subtle-foreground" aria-hidden />
+              ) : null}
+              {isLast ? (
+                <span aria-current="page" className="px-1 py-0.5">
+                  {label}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  title={serializeDn(level)}
+                  onClick={() => onOpen(serializeDn(level))}
+                  className="rounded-sm px-1 py-0.5 hover:bg-hover"
+                >
+                  {label}
+                </button>
+              )}
+            </li>
+          )
+        })}
+      </HorizontalScroller>
     </nav>
   )
 }

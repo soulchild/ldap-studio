@@ -178,7 +178,7 @@ export function EditorPane(): React.JSX.Element {
               aria-label={KIND_LABELS[kind]}
               title={KIND_LABELS[kind]}
             >
-              <EntryIcon kind={kind} className={hasTags ? 'size-5' : 'size-[18px]'} />
+              <EntryIcon kind={kind} className={hasTags ? 'size-5' : 'size-4.5'} />
             </span>
             <div className={cn('flex min-w-0 flex-col', hasTags ? 'h-12 justify-between' : 'justify-center')}>
               {/* Trimmed to cap height so the letters, not the line box, touch the top. Clipped
