@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { HorizontalScroller } from '@renderer/components/HorizontalScroller'
+import { Button } from '@renderer/components/ui/button'
 import { keyOf } from '@renderer/tree/model'
 import { ancestorsOf, parseDn, serializeDn, serializeRdn } from '@shared/dn'
 
@@ -45,14 +46,15 @@ export function DnPath({
                   {label}
                 </span>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="inline"
+                  className="py-0.5"
                   title={serializeDn(level)}
                   onClick={() => onOpen(serializeDn(level))}
-                  className="rounded-sm px-1 py-0.5 hover:bg-hover"
                 >
                   {label}
-                </button>
+                </Button>
               )}
             </li>
           )

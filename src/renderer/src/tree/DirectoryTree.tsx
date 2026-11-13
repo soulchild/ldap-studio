@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { isWithin } from '@renderer/actions/helpers'
 import { ContextMenu } from '@renderer/components/ui/context-menu'
 import { cn } from '@renderer/lib/utils'
+import { Button } from '@renderer/components/ui/button'
 import { EntryIcon } from './EntryIcon'
 import { entryKind } from './entry-kind'
 import { escapeDnValue, parseDn } from '@shared/dn'
@@ -384,7 +385,6 @@ function StatusRow({
   const loaded = count.format(node.childKeys?.length ?? 0)
   // Lines up with the names of child rows: chevron (20) + gap (4) + icon (14) + gap (4).
   const textStyle = { ...style, paddingLeft: Number(style.paddingLeft) + 42 }
-  const link = 'rounded-sm px-1 font-medium text-foreground hover:bg-hover'
   switch (row.kind) {
     case 'loading':
       return (
@@ -396,18 +396,18 @@ function StatusRow({
           <span>
             {node.queued ? 'Waiting for another operation on this connection…' : `Loading… ${loaded}`}
           </span>
-          <button type="button" className={link} onClick={onCancel}>
+          <Button variant="ghost" size="inline" className="font-medium" onClick={onCancel}>
             Stop
-          </button>
+          </Button>
         </div>
       )
     case 'incomplete':
       return (
         <div role="status" className="flex h-full items-center gap-2 text-xs text-warning" style={textStyle}>
           <span>Showing {loaded} entries. The list is incomplete.</span>
-          <button type="button" className={link} onClick={onRetry}>
+          <Button variant="ghost" size="inline" className="font-medium" onClick={onRetry}>
             Load all
-          </button>
+          </Button>
         </div>
       )
     case 'error':
@@ -420,9 +420,9 @@ function StatusRow({
           <span className="truncate" title={node.error}>
             {node.error}
           </span>
-          <button type="button" className={link} onClick={onRetry}>
+          <Button variant="ghost" size="inline" className="font-medium" onClick={onRetry}>
             Try again
-          </button>
+          </Button>
         </div>
       )
     default:

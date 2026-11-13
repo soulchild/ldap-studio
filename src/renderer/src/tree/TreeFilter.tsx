@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react'
 import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Combobox } from '@renderer/components/ui/combobox'
 import { cn } from '@renderer/lib/utils'
+import { Button } from '@renderer/components/ui/button'
 import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { useTree } from '@renderer/state/tree'
 import { DEFAULT_FORM, MAX_MATCHES, useTreeFilter } from '@renderer/state/tree-filter'
@@ -112,13 +113,9 @@ export function TreeFilterBar({
           }}
           className={cn(field, 'flex-1 font-mono disabled:opacity-60')}
         />
-        <button
-          type="submit"
-          disabled={!filter}
-          className="flex h-7 shrink-0 items-center gap-1 rounded-sm border border-input bg-surface px-2 text-xs font-medium hover:bg-hover disabled:pointer-events-none disabled:opacity-50"
-        >
+        <Button type="submit" size="sm" disabled={!filter} className="shrink-0 font-medium">
           <ListFilter className="size-3.5" /> Filter
-        </button>
+        </Button>
       </div>
       <Checkbox
         className="text-xs text-muted-foreground"
@@ -167,13 +164,14 @@ export function TreeFilterStatus({ connectionId }: { connectionId: string }): Re
       >
         {text}
       </p>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-my-0.5 h-6 shrink-0 px-1.5 font-medium"
         onClick={() => useTreeFilter.getState().clear(connectionId)}
-        className="-my-0.5 flex h-6 shrink-0 items-center gap-1 rounded-sm px-1.5 font-medium text-foreground hover:bg-hover"
       >
         <X className="size-3.5" /> Clear filter
-      </button>
+      </Button>
     </div>
   )
 }

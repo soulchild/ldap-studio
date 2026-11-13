@@ -1,5 +1,6 @@
 import { Check, Copy } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Button } from '@renderer/components/ui/button'
 import { cn } from '@renderer/lib/utils'
 
 const CONFIRM_MS = 2000
@@ -31,8 +32,9 @@ export function CopyButton({
   }, [copied])
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="quiet"
+      size="icon"
       aria-label={label}
       title={copied ? 'Copied' : label}
       data-copied={copied ? true : undefined}
@@ -46,10 +48,7 @@ export function CopyButton({
           requestAnimationFrame(() => setCopied(true))
         }
       }}
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground',
-        className,
-      )}
+      className={className}
     >
       {copied ? (
         <Check className={cn(iconClassName, 'text-success')} strokeWidth={2.5} aria-hidden />
@@ -59,6 +58,6 @@ export function CopyButton({
       <span role="status" className="sr-only">
         {copied ? 'Copied' : ''}
       </span>
-    </button>
+    </Button>
   )
 }

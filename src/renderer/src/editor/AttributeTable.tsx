@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
 import { CopyButton } from '@renderer/components/CopyButton'
+import { IconButton } from '@renderer/components/IconButton'
 import { cn } from '@renderer/lib/utils'
 import type { AttributeValue } from '@shared/entry'
 import { describePassword, isPasswordAttribute } from '@shared/password'
@@ -27,9 +28,6 @@ import { isMultiline, lineBreakStyle, lineCount, MAX_VISIBLE_LINES, withLineBrea
 /** Attributes with more values than this start collapsed to a value count. */
 const COLLAPSE_ABOVE = 10
 const count = new Intl.NumberFormat()
-
-const actionButton =
-  'flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover hover:text-foreground'
 
 /** Asks main to show a file dialog and read the chosen file; undefined if cancelled. */
 async function chooseFile(): Promise<Uint8Array<ArrayBuffer> | undefined> {
@@ -123,7 +121,12 @@ export function AttributeTable({
                       <title>{operational ? 'Read-only: maintained by the server' : 'Read-only'}</title>
                     </Lock>
                   ) : isRequired ? (
-                    <Asterisk className="size-3" role="img" aria-label="Required" strokeWidth={2.5}>
+                    <Asterisk
+                      className="size-3 text-success"
+                      role="img"
+                      aria-label="Required"
+                      strokeWidth={2.5}
+                    >
                       <title>Required by the entry's object classes</title>
                     </Asterisk>
                   ) : null}
@@ -132,18 +135,17 @@ export function AttributeTable({
                   {attribute.name}
                 </span>
                 {collapsible ? (
-                  <button
-                    type="button"
-                    className="-my-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover hover:text-foreground"
+                  <IconButton
+                    className="-my-1 size-5"
                     aria-expanded={!collapsed}
-                    aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${attribute.name} values`}
+                    label={`${collapsed ? 'Expand' : 'Collapse'} ${attribute.name} values`}
                     title={collapsed ? 'Show values' : 'Hide values'}
                     onClick={() => setCollapsed(attribute.name, !collapsed)}
                   >
                     <ChevronRight
                       className={cn('size-3.5 transition-transform', !collapsed && 'rotate-90')}
                     />
-                  </button>
+                  </IconButton>
                 ) : null}
                 {changed ? (
                   <span
@@ -155,10 +157,9 @@ export function AttributeTable({
                 {/* On the name line, so the hidden actions take no extra height. */}
                 <span className="-my-1 ml-auto flex shrink-0 opacity-0 transition-opacity group-hover/attribute:opacity-100 group-focus-within/attribute:opacity-100 has-data-copied:opacity-100">
                   {!locked && !singleValued ? (
-                    <button
-                      type="button"
-                      className={cn(actionButton, 'size-6')}
-                      aria-label={`Add ${attribute.name} value`}
+                    <IconButton
+                      className="size-6"
+                      label={`Add ${attribute.name} value`}
                       title="Add value"
                       onClick={async () => {
                         setCollapsed(attribute.name, false)
@@ -178,7 +179,7 @@ export function AttributeTable({
                       }}
                     >
                       <Plus className="size-3.5" />
-                    </button>
+                    </IconButton>
                   ) : null}
                   {attribute.values.length > 1 &&
                   attribute.values.every((value) => typeof value === 'string') ? (
@@ -195,13 +196,14 @@ export function AttributeTable({
               {collapsed ? (
                 <div role="row" className="py-0.5">
                   <div role="cell">
-                    <button
-                      type="button"
-                      className="flex h-7 items-center rounded-sm px-2.5 text-sm text-muted-foreground hover:bg-hover hover:text-foreground"
+                    <Button
+                      variant="quiet"
+                      size="sm"
+                      className="px-2.5 text-sm"
                       onClick={() => setCollapsed(attribute.name, false)}
                     >
                       {count.format(attribute.values.length)} values
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -227,36 +229,30 @@ export function AttributeTable({
                     />
                     <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100">
                       {typeof value === 'string' && dnValued && !locked ? (
-                        <button
-                          type="button"
-                          className={actionButton}
-                          aria-label={`Choose ${attribute.name} value from the directory`}
+                        <IconButton
+                          label={`Choose ${attribute.name} value from the directory`}
                           title="Choose entry…"
                           onClick={() => setPicking({ attribute: attribute.name, index, value })}
                         >
                           <FolderTree className="size-3.5" />
-                        </button>
+                        </IconButton>
                       ) : null}
                       {isPasswordAttribute(attribute.name) ? (
                         !locked ? (
-                          <button
-                            type="button"
-                            className={actionButton}
-                            aria-label={`Set ${attribute.name} value`}
+                          <IconButton
+                            label={`Set ${attribute.name} value`}
                             title="Set password…"
                             onClick={() => setSettingPassword({ attribute: attribute.name, index })}
                           >
                             <KeyRound className="size-3.5" />
-                          </button>
+                          </IconButton>
                         ) : null
                       ) : typeof value === 'string' ? (
                         <CopyButton label={`Copy ${attribute.name} value`} className="size-7" text={value} />
                       ) : (
                         <>
-                          <button
-                            type="button"
-                            className={actionButton}
-                            aria-label={`Save ${attribute.name} value to a file`}
+                          <IconButton
+                            label={`Save ${attribute.name} value to a file`}
                             title="Save to file…"
                             onClick={() =>
                               void window.api.invoke('binary.saveToFile', {
@@ -266,12 +262,10 @@ export function AttributeTable({
                             }
                           >
                             <Download className="size-3.5" />
-                          </button>
+                          </IconButton>
                           {!locked ? (
-                            <button
-                              type="button"
-                              className={actionButton}
-                              aria-label={`Replace ${attribute.name} value from a file`}
+                            <IconButton
+                              label={`Replace ${attribute.name} value from a file`}
                               title="Replace from file…"
                               onClick={async () => {
                                 const bytes = await chooseFile()
@@ -281,20 +275,18 @@ export function AttributeTable({
                               }}
                             >
                               <Upload className="size-3.5" />
-                            </button>
+                            </IconButton>
                           ) : null}
                         </>
                       )}
                       {!locked ? (
-                        <button
-                          type="button"
-                          className={actionButton}
-                          aria-label={`Remove ${attribute.name} value`}
+                        <IconButton
+                          label={`Remove ${attribute.name} value`}
                           title="Remove value"
                           onClick={() => onChange(removeValue(working, attribute.name, index))}
                         >
                           <X className="size-3.5" />
-                        </button>
+                        </IconButton>
                       ) : null}
                     </div>
                   </div>
@@ -320,16 +312,17 @@ export function AttributeTable({
           >
             <span className="min-w-0 flex-1">{message}</span>
             {!readOnly ? (
-              <button
-                type="button"
-                className="h-7 shrink-0 rounded-sm px-2 text-sm font-medium text-foreground hover:bg-hover"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 text-sm font-medium"
                 onClick={() => {
                   setFocusTarget(`${name}-0`)
                   onChange(addAttribute(working, name))
                 }}
               >
                 Add {name}
-              </button>
+              </Button>
             ) : null}
           </div>
         ))}
@@ -522,13 +515,9 @@ function AddAttribute({
   if (!open) {
     return (
       <div className="px-5 py-2.5">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex h-7 items-center gap-1.5 rounded-sm px-2 text-sm text-muted-foreground hover:bg-hover hover:text-foreground"
-        >
+        <Button className="gap-1.5 text-sm" onClick={() => setOpen(true)}>
           <Plus className="size-3.5" /> Add attribute
-        </button>
+        </Button>
       </div>
     )
   }
