@@ -260,6 +260,10 @@ export function DnPickerDialog({
           reached = nextKey
         }
         setSelected(reached)
+        // A root alone shows nothing to pick; open it like the first root without a value.
+        if (latest.current.rootKeys.includes(reached)) {
+          void expand(reached)
+        }
       })()
     } else {
       const first = latest.current.rootKeys[0]
