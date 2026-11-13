@@ -1,0 +1,113 @@
+# Publishes a release: Actions → Release → Run workflow, on main, with the new version.
+#
+# Nothing is committed or tagged until every check has passed. In order:
+# 1. Check the version: a valid version whose tag does not exist yet.
+# 2. Run CI (ci.yml) with that version and the end-to-end tests: checks, tests, and the installers
+#    for macOS, Windows and Linux, each installed and launched.
+# 3. Set the version in package.json, write CHANGELOG.md with git-cliff (cliff.toml), commit both
+#    as "Release <version>", and push the commit and the tag v<version> together.
+# 4. Publish the GitHub release with the installers and this version's changelog as its notes.
+#
+# If anything fails, nothing has been pushed: fix it and run the workflow again with the same
+# version. If main has moved on while the release ran, the push fails and nothing is published.
+# Versions with a suffix, like 1.2.0-beta.1, become pre-releases.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, without the "v" (for example 1.2.0 or 1.2.0-beta.1)
+        type: string
+        required: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo "::error::Start the release from main, not $GITHUB_REF."
+            exit 1
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::\"$VERSION\" is not a version like 1.2.0 or 1.2.0-beta.1."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "::error::Tag v$VERSION already exists."
+            exit 1
+          fi
+
+  ci:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      version: ${{ inputs.version }}
+      e2e: true
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      # The commit CI tested, with the full history and tags for the changelog.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Set the version and write the changelog
+        run: |
+          npm pkg set version="$VERSION"
+          pnpm exec git-cliff --tag "v$VERSION" --output CHANGELOG.md
+          pnpm exec git-cliff --tag "v$VERSION" --unreleased --strip header --output "$RUNNER_TEMP/notes.md"
+          pnpm exec prettier --write package.json CHANGELOG.md
+      - name: Commit, tag and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json CHANGELOG.md
+          git commit -m "Release $VERSION"
+          git tag -a "v$VERSION" -m "LDAP Studio $VERSION"
+          # Both or neither, and only if main is still at the commit CI tested.
+          git push --atomic origin HEAD:refs/heads/main "refs/tags/v$VERSION"
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: installers-*
+          path: installers
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=()
+          if [[ "$VERSION" == *-* ]]; then
+            prerelease=(--prerelease)
+          fi
+          gh release create "v$VERSION" installers/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "LDAP Studio $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag \
+            "${prerelease[@]}"

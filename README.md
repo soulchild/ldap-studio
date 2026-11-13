@@ -24,24 +24,25 @@ On macOS, `pnpm dev` and `pnpm preview` start the app from a renamed copy of Ele
 
 ## Commands
 
-| Command                 | What it does                                                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `pnpm dev`              | Start the app in development mode with hot reload                                           |
-| `pnpm build`            | Build main, preload and renderer into `out/`                                                |
-| `pnpm preview`          | Run the production build                                                                    |
-| `pnpm typecheck`        | Type-check the main/preload and renderer projects                                           |
-| `pnpm lint`             | Lint, including the curly-brace and import-boundary rules                                   |
-| `pnpm format`           | Format all files with Prettier                                                              |
-| `pnpm format:check`     | Check formatting without writing                                                            |
-| `pnpm test`             | Run the unit tests                                                                          |
-| `pnpm test:integration` | Run the integration tests against the Docker test servers (skipped if they are not running) |
-| `pnpm test:env:up`      | Start and seed the Docker test servers (see `test/ldap/README.md`)                          |
-| `pnpm test:env:down`    | Stop the test servers and delete their data                                                 |
-| `pnpm test:e2e`         | Build, then run the Playwright tests against the app (most need the test servers)           |
-| `pnpm dist`             | Build installers for the current platform into `dist/`                                      |
-| `pnpm dist:mac`         | Build macOS DMGs (Apple Silicon and Intel)                                                  |
-| `pnpm dist:win`         | Build Windows NSIS installers (x64 and Arm64)                                               |
-| `pnpm dist:linux`       | Build a Linux AppImage and deb                                                              |
+| Command                  | What it does                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| `pnpm dev`               | Start the app in development mode with hot reload                                           |
+| `pnpm build`             | Build main, preload and renderer into `out/`                                                |
+| `pnpm preview`           | Run the production build                                                                    |
+| `pnpm typecheck`         | Type-check the main/preload and renderer projects                                           |
+| `pnpm lint`              | Lint, including the curly-brace and import-boundary rules                                   |
+| `pnpm format`            | Format all files with Prettier                                                              |
+| `pnpm format:check`      | Check formatting without writing                                                            |
+| `pnpm test`              | Run the unit tests                                                                          |
+| `pnpm test:integration`  | Run the integration tests against the Docker test servers (skipped if they are not running) |
+| `pnpm test:env:up`       | Start and seed the Docker test servers (see `test/ldap/README.md`)                          |
+| `pnpm test:env:down`     | Stop the test servers and delete their data                                                 |
+| `pnpm test:e2e`          | Build, then run the Playwright tests against the app (most need the test servers)           |
+| `pnpm dist`              | Build installers for the current platform into `dist/`                                      |
+| `pnpm dist:mac`          | Build macOS DMGs (Apple Silicon and Intel)                                                  |
+| `pnpm dist:win`          | Build Windows NSIS installers (x64 and Arm64)                                               |
+| `pnpm dist:linux`        | Build a Linux AppImage and deb                                                              |
+| `pnpm changelog:preview` | Show the changelog entries for the next release                                             |
 
 ## Installers
 
@@ -56,6 +57,14 @@ To check a build, `node test/package/launch.mjs <executable>` launches it and wa
 ## Continuous integration
 
 `.github/workflows/ci.yml` checks formatting, lint and types, runs the unit and integration tests, and builds, installs and launches the installers on macOS, Windows and Linux. The end-to-end tests are optional: they run when the workflow is started by hand (with "Run the end-to-end tests" ticked), when a pushed commit message contains `[e2e]`, when a pull request has the label `e2e`, or always if the repository variable `RUN_E2E` is `true`.
+
+## Releasing
+
+Start a release in GitHub under Actions → Release → Run workflow, on `main`, with the new version (for example `1.2.0`; `1.2.0-beta.1` becomes a pre-release). `.github/workflows/release.yml` runs CI with that version and the end-to-end tests. Only if everything passes does it set the version in `package.json`, write `CHANGELOG.md`, commit both as "Release 1.2.0", push the commit with the tag `v1.2.0`, and publish a GitHub release with the installers and the version's changelog. If anything fails, nothing is pushed, and you can run it again with the same version.
+
+The changelog is made by [git-cliff](https://git-cliff.org) from the commit subjects, grouped by their first word ("Add…" under Added, "Fix…" under Fixed, "Remove…" under Removed, the rest under Changed; see `cliff.toml`). Write subjects as they should read in the changelog. `pnpm changelog:preview` shows what the next release will list.
+
+The workflow pushes to `main` with the built-in `GITHUB_TOKEN`. If `main` is protected, allow GitHub Actions to push to it.
 
 ## Project layout
 
