@@ -1,6 +1,6 @@
 # Spec coverage
 
-Each scenario in `openspec/changes/ldap-studio-mvp/specs` and the test or checklist item that covers it (task 14.4). The paths are shortened as follows:
+Each scenario in `openspec/specs` and the test or checklist item that covers it (task 14.4). The paths are shortened as follows:
 
 - `e2e/` is `test/e2e/`.
 - `int/` is an `*.int.test.ts` file under `src/main`.
