@@ -216,9 +216,9 @@ export function EditorPane(): React.JSX.Element {
                   { label: 'Rename…', onSelect: () => act('rename'), disabled: readOnly },
                   { label: 'Move…', onSelect: () => act('move'), disabled: readOnly },
                   'separator',
-                  { label: 'Delete…', onSelect: () => act('delete'), disabled: readOnly, destructive: true },
+                  { label: `Reload${pending.length > 0 ? '…' : ''}`, onSelect: () => act('reload') },
                   'separator',
-                  { label: 'Reload', onSelect: () => act('reload') },
+                  { label: 'Delete…', onSelect: () => act('delete'), disabled: readOnly, destructive: true },
                 ]}
               />
             </div>
