@@ -211,7 +211,11 @@ export function AttributeTable({
                 const fresh = isNewValue(original, attribute.name, value)
                 const inputId = `${attribute.name}-${index}`
                 return (
-                  <div key={index} role="row" className="group/value relative flex items-center gap-1 pt-0.5 pb-px">
+                  <div
+                    key={index}
+                    role="row"
+                    className="group/value relative flex items-center gap-1 pt-0.5 pb-px"
+                  >
                     {fresh && !locked ? (
                       <span
                         className="absolute top-1.5 bottom-1.5 -left-2.5 w-0.5 rounded-full bg-primary"
