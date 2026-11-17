@@ -101,9 +101,9 @@ export function AttributeTable({
             key={attribute.name}
             role="rowgroup"
             aria-label={attribute.name}
-            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 py-1 pr-5 pl-7 last:border-b-0"
+            className="group/attribute isolate grid overflow-x-clip grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 pr-5 pl-7 last:border-b-0"
           >
-            <div className="flex min-w-0 flex-col pt-1.5">
+            <div className="flex min-w-0 flex-col pt-[7px]">
               <span
                 className={cn(
                   'flex items-center gap-1.5 text-sm',
@@ -194,7 +194,7 @@ export function AttributeTable({
             </div>
             <div className="flex min-w-0 flex-col">
               {collapsed ? (
-                <div role="row" className="pt-0.5 pb-px">
+                <div role="row" className="py-[3px]">
                   <div role="cell">
                     <Button
                       variant="quiet"
@@ -214,7 +214,14 @@ export function AttributeTable({
                   <div
                     key={index}
                     role="row"
-                    className="group/value relative flex items-center gap-1 pt-0.5 pb-px"
+                    className={cn(
+                      'group/value relative flex items-center gap-1 py-[3px]',
+                      // Ties the actions, which can sit far right of a short value, to their value: a band
+                      // across the full row. Every value has the same padding, so the bands match.
+                      'before:pointer-events-none before:absolute before:inset-y-0 before:-right-5 before:left-[-100vw] before:-z-10',
+                      'before:bg-hover/60 before:opacity-0 before:transition-opacity',
+                      'has-[[data-value-actions]:hover]:before:opacity-100 has-[[data-value-actions]_:focus-visible]:before:opacity-100',
+                    )}
                   >
                     {fresh && !locked ? (
                       <span
@@ -231,7 +238,10 @@ export function AttributeTable({
                       autoFocus={focusTarget === inputId}
                       onChange={(next) => onChange(setValue(working, attribute.name, index, next))}
                     />
-                    <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100">
+                    <div
+                      data-value-actions
+                      className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100"
+                    >
                       {typeof value === 'string' && dnValued && !locked ? (
                         <IconButton
                           label={`Choose ${attribute.name} value from the directory`}
@@ -447,6 +457,7 @@ function ValueField({
 const textFieldClasses = cn(
   'min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
   'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
+  'group-has-[[data-value-actions]:hover]/value:border-input',
 )
 
 /**
