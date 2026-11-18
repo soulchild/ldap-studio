@@ -194,11 +194,11 @@ The user SHALL be able to copy a text value, or an attribute with all its values
 - **THEN** the clipboard contains that value
 
 ### Requirement: Multi-line text values
-The editor SHALL show a text value that contains a line break in a multi-line field, and a value without one in a single-line field. The multi-line field SHALL show up to five lines without scrolling, SHALL scroll when the value is longer, and SHALL let the user change its height but not its width. A read-only multi-line value SHALL be shown with its line breaks.
+The editor SHALL show a text value that contains a line break in a multi-line field, and a value without one in a single-line field. The multi-line field SHALL show up to ten lines without scrolling, SHALL scroll when the value is longer, and SHALL let the user change its height but not its width. A read-only multi-line value SHALL be shown with its line breaks.
 
 #### Scenario: Multi-line value
-- **WHEN** an entry has a "description" value of six lines
-- **THEN** the value is shown in a multi-line field that shows five lines and scrolls to the sixth
+- **WHEN** an entry has a "description" value of eleven lines
+- **THEN** the value is shown in a multi-line field that shows ten lines and scrolls to the eleventh
 
 #### Scenario: Short multi-line value
 - **WHEN** a value has two lines
@@ -228,12 +228,12 @@ A multi-line value the user does not edit SHALL be saved byte for byte unchanged
 - **THEN** the server stores the value with CR LF line breaks
 
 ### Requirement: Multi-line values in the change preview
-The change preview SHALL show multi-line values with their line breaks. Each value SHALL show up to five lines and SHALL scroll on its own when it is longer, so that several long values do not make the preview unreadable.
+The change preview SHALL show multi-line values with their line breaks. Each value SHALL show up to ten lines and SHALL scroll on its own when it is longer, so that several long values do not make the preview unreadable.
 
 #### Scenario: Review a multi-line change
 - **WHEN** the user reviews a change to a multi-line value
 - **THEN** the preview shows the value with its line breaks
 
 #### Scenario: Long values scroll
-- **WHEN** the preview lists two changed values of eight lines each
-- **THEN** each value shows five lines and can be scrolled to the rest, also with the keyboard
+- **WHEN** the preview lists two changed values of twelve lines each
+- **THEN** each value shows ten lines and can be scrolled to the rest, also with the keyboard

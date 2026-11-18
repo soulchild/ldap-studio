@@ -466,16 +466,17 @@ test.describe('multi-line values (entry-editing spec)', () => {
     ])
   }
 
-  test('shows multi-line values in text areas up to five lines high, and single lines in inputs', async () => {
-    await setDescription([sixLines.join('\n'), 'first\nsecond', 'just one line'])
+  test('shows multi-line values in text areas up to ten lines high, and single lines in inputs', async () => {
+    const elevenLines = Array.from({ length: 11 }, (_, index) => `line ${index + 1}`).join('\n')
+    await setDescription([elevenLines, 'first\nsecond', 'just one line'])
     await open(entryDn)
     await expect(description()).toHaveCount(3)
-    const [six, two, one] = [description().nth(0), description().nth(1), description().nth(2)]
-    await expect(six).toHaveJSProperty('tagName', 'TEXTAREA')
-    await expect(six).toHaveValue(sixLines.join('\n'))
-    await expect(six).toHaveAttribute('rows', '5')
-    // Five lines show; the sixth needs scrolling.
-    expect(await six.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
+    const [eleven, two, one] = [description().nth(0), description().nth(1), description().nth(2)]
+    await expect(eleven).toHaveJSProperty('tagName', 'TEXTAREA')
+    await expect(eleven).toHaveValue(elevenLines)
+    await expect(eleven).toHaveAttribute('rows', '10')
+    // Ten lines show; the eleventh needs scrolling.
+    expect(await eleven.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
     await expect(two).toHaveJSProperty('tagName', 'TEXTAREA')
     await expect(two).toHaveAttribute('rows', '2')
     await expect(one).toHaveJSProperty('tagName', 'INPUT')
@@ -528,13 +529,13 @@ test.describe('multi-line values (entry-editing spec)', () => {
     await expect(description()).toHaveValue('abcde')
   })
 
-  test('shows multi-line values in the change preview, each five lines high and scrollable', async () => {
-    const eightLines = (name: string) =>
-      Array.from({ length: 8 }, (_, index) => `${name} ${index + 1}`).join('\n')
-    await setDescription([eightLines('first'), eightLines('second')])
+  test('shows multi-line values in the change preview, each ten lines high and scrollable', async () => {
+    const twelveLines = (name: string) =>
+      Array.from({ length: 12 }, (_, index) => `${name} ${index + 1}`).join('\n')
+    await setDescription([twelveLines('first'), twelveLines('second')])
     await open(entryDn)
-    await description().nth(0).fill(eightLines('changed first'))
-    await description().nth(1).fill(eightLines('changed second'))
+    await description().nth(0).fill(twelveLines('changed first'))
+    await description().nth(1).fill(twelveLines('changed second'))
     await editor().getByRole('button', { name: 'Review and save…' }).click()
     const preview = page.getByRole('dialog', { name: 'Review changes' })
     const values = preview.getByRole('region', { name: 'description value' })
@@ -547,7 +548,7 @@ test.describe('multi-line values (entry-editing spec)', () => {
         scrolls: element.scrollHeight > element.clientHeight,
         focusable: element.tabIndex === 0,
       }))
-      expect(box).toEqual({ lines: 5, scrolls: true, focusable: true })
+      expect(box).toEqual({ lines: 10, scrolls: true, focusable: true })
     }
   })
 
