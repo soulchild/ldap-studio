@@ -5,7 +5,14 @@
 import { create } from 'zustand'
 import { changes, cleaned, validate, type Working } from '@renderer/editor/model'
 import { keyOf } from '@renderer/tree/model'
-import { escapeDnValue, parentDn as parentOf, parseDnStrict, serializeDn } from '@shared/dn'
+import {
+  escapeDnValue,
+  isDescendantOf,
+  parentDn as parentOf,
+  parseDn,
+  parseDnStrict,
+  serializeDn,
+} from '@shared/dn'
 import type { Modification } from '@shared/entry'
 import type { Entry } from '@shared/ipc'
 import { NO_SCHEMA, useSchema } from './schema'
@@ -297,4 +304,27 @@ export async function showInTree(connectionId: string, dn: string): Promise<void
     tree.refresh(connectionId, parentKey)
   }
   await tree.reveal(connectionId, dn)
+}
+
+/**
+ * Opens an entry in the editor, showing it in the tree when it is below one of the roots. With
+ * `revealOnly`, an entry outside the tree is not opened. An entry that the tree cannot show,
+ * such as one that no longer exists, is opened directly so the editor says what happened.
+ */
+export async function openEntry(connectionId: string, dn: string, revealOnly = false): Promise<void> {
+  const tree = useTree.getState()
+  const roots = tree.trees[connectionId]?.rootKeys ?? []
+  const parsed = parseDn(dn)
+  const inTree =
+    parsed.ok &&
+    roots.some((root) => {
+      const rootDn = parseDn(tree.trees[connectionId]?.nodes[root]?.dn ?? '')
+      return rootDn.ok && (keyOf(dn) === root || isDescendantOf(parsed.dn, rootDn.dn))
+    })
+  if (inTree && (await tree.reveal(connectionId, dn))) {
+    return
+  }
+  if (!revealOnly) {
+    useEditor.getState().requestOpen(connectionId, dn)
+  }
 }

@@ -1,10 +1,23 @@
-import { Asterisk, ChevronRight, Download, FolderTree, KeyRound, Lock, Plus, Upload, X } from 'lucide-react'
+import {
+  Asterisk,
+  ChevronRight,
+  Download,
+  ExternalLinkIcon,
+  FolderTree,
+  KeyRound,
+  Lock,
+  Plus,
+  Upload,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
 import { CopyButton } from '@renderer/components/CopyButton'
 import { IconButton } from '@renderer/components/IconButton'
 import { cn } from '@renderer/lib/utils'
+import { openEntry } from '@renderer/state/editor'
+import { parseDn } from '@shared/dn'
 import type { AttributeValue } from '@shared/entry'
 import { describePassword, isPasswordAttribute } from '@shared/password'
 import type { SchemaModel } from '@shared/schema-model'
@@ -28,6 +41,12 @@ import { isMultiline, lineBreakStyle, lineCount, MAX_VISIBLE_LINES, withLineBrea
 /** Attributes with more values than this start collapsed to a value count. */
 const COLLAPSE_ABOVE = 10
 const count = new Intl.NumberFormat()
+
+/** Whether a DN value names an entry to go to: a valid, non-empty DN (entry-editing spec: go to DN values). */
+function isReference(value: string): boolean {
+  const parsed = parseDn(value.trim())
+  return parsed.ok && parsed.dn.length > 0
+}
 
 /** Asks main to show a file dialog and read the chosen file; undefined if cancelled. */
 async function chooseFile(): Promise<Uint8Array<ArrayBuffer> | undefined> {
@@ -101,9 +120,9 @@ export function AttributeTable({
             key={attribute.name}
             role="rowgroup"
             aria-label={attribute.name}
-            className="group/attribute grid grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 py-1 pr-5 pl-7 last:border-b-0"
+            className="group/attribute isolate grid overflow-x-clip grid-cols-[minmax(8rem,14rem)_1fr] gap-x-4 border-b border-border/70 pr-5 pl-7 last:border-b-0"
           >
-            <div className="flex min-w-0 flex-col pt-1.5">
+            <div className="flex min-w-0 flex-col pt-[7px]">
               <span
                 className={cn(
                   'flex items-center gap-1.5 text-sm',
@@ -194,7 +213,7 @@ export function AttributeTable({
             </div>
             <div className="flex min-w-0 flex-col">
               {collapsed ? (
-                <div role="row" className="pt-0.5 pb-px">
+                <div role="row" className="py-[3px]">
                   <div role="cell">
                     <Button
                       variant="quiet"
@@ -214,7 +233,14 @@ export function AttributeTable({
                   <div
                     key={index}
                     role="row"
-                    className="group/value relative flex items-center gap-1 pt-0.5 pb-px"
+                    className={cn(
+                      'group/value relative flex items-center gap-1 py-[3px]',
+                      // Ties the actions, which can sit far right of a short value, to their value: a band
+                      // across the full row. Every value has the same padding, so the bands match.
+                      'before:pointer-events-none before:absolute before:inset-y-0 before:-right-5 before:left-[-100vw] before:-z-10',
+                      'before:bg-hover/60 before:opacity-0 before:transition-opacity',
+                      'has-[[data-value-actions]:hover]:before:opacity-100 has-[[data-value-actions]_:focus-visible]:before:opacity-100',
+                    )}
                   >
                     {fresh && !locked ? (
                       <span
@@ -231,7 +257,19 @@ export function AttributeTable({
                       autoFocus={focusTarget === inputId}
                       onChange={(next) => onChange(setValue(working, attribute.name, index, next))}
                     />
-                    <div className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100">
+                    <div
+                      data-value-actions
+                      className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100"
+                    >
+                      {typeof value === 'string' && dnValued && isReference(value) ? (
+                        <IconButton
+                          label={`Go to ${attribute.name} value`}
+                          title="Go to entry"
+                          onClick={() => void openEntry(connectionId, value.trim())}
+                        >
+                          <ExternalLinkIcon className="size-3.5" />
+                        </IconButton>
+                      ) : null}
                       {typeof value === 'string' && dnValued && !locked ? (
                         <IconButton
                           label={`Choose ${attribute.name} value from the directory`}
@@ -447,6 +485,7 @@ function ValueField({
 const textFieldClasses = cn(
   'min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2.5 font-mono text-sm',
   'hover:border-input focus-visible:border-primary focus-visible:bg-surface focus-visible:outline-none',
+  'group-has-[[data-value-actions]:hover]/value:border-input',
 )
 
 /**
