@@ -1,10 +1,23 @@
-import { Asterisk, ChevronRight, Download, FolderTree, KeyRound, Lock, Plus, Upload, X } from 'lucide-react'
+import {
+  Asterisk,
+  ChevronRight,
+  Download,
+  ExternalLinkIcon,
+  FolderTree,
+  KeyRound,
+  Lock,
+  Plus,
+  Upload,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Combobox } from '@renderer/components/ui/combobox'
 import { CopyButton } from '@renderer/components/CopyButton'
 import { IconButton } from '@renderer/components/IconButton'
 import { cn } from '@renderer/lib/utils'
+import { openEntry } from '@renderer/state/editor'
+import { parseDn } from '@shared/dn'
 import type { AttributeValue } from '@shared/entry'
 import { describePassword, isPasswordAttribute } from '@shared/password'
 import type { SchemaModel } from '@shared/schema-model'
@@ -28,6 +41,12 @@ import { isMultiline, lineBreakStyle, lineCount, MAX_VISIBLE_LINES, withLineBrea
 /** Attributes with more values than this start collapsed to a value count. */
 const COLLAPSE_ABOVE = 10
 const count = new Intl.NumberFormat()
+
+/** Whether a DN value names an entry to go to: a valid, non-empty DN (entry-editing spec: go to DN values). */
+function isReference(value: string): boolean {
+  const parsed = parseDn(value.trim())
+  return parsed.ok && parsed.dn.length > 0
+}
 
 /** Asks main to show a file dialog and read the chosen file; undefined if cancelled. */
 async function chooseFile(): Promise<Uint8Array<ArrayBuffer> | undefined> {
@@ -242,6 +261,15 @@ export function AttributeTable({
                       data-value-actions
                       className="flex shrink-0 opacity-0 transition-opacity group-hover/value:opacity-100 group-focus-within/value:opacity-100 has-data-copied:opacity-100"
                     >
+                      {typeof value === 'string' && dnValued && isReference(value) ? (
+                        <IconButton
+                          label={`Go to ${attribute.name} value`}
+                          title="Go to entry"
+                          onClick={() => void openEntry(connectionId, value.trim())}
+                        >
+                          <ExternalLinkIcon className="size-3.5" />
+                        </IconButton>
+                      ) : null}
                       {typeof value === 'string' && dnValued && !locked ? (
                         <IconButton
                           label={`Choose ${attribute.name} value from the directory`}

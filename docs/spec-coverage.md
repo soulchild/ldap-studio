@@ -111,6 +111,8 @@ Each scenario in `openspec/specs` and the test or checklist item that covers it 
 | Long values scroll                       | e2e/editor › shows multi-line values in the change preview, each ten lines high and scrollable                                      |
 | Copy a value                             | e2e/editor › copies a value and all values of an attribute                                                                          |
 | Choose a group member                    | e2e/editor › picks a member from the directory, starting at the current value; unit/schema model › DN attributes                    |
+| Go to a group member                     | e2e/editor › goes to the entry a DN value names                                                                                     |
+| Go to a missing entry                    | e2e/editor › goes to the entry a DN value names                                                                                     |
 
 ## Schema model
 

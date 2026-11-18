@@ -8,15 +8,12 @@ import { DropdownMenu } from '@renderer/components/ui/dropdown-menu'
 import { DnPickerDialog } from '@renderer/editor/DnPickerDialog'
 import { cn } from '@renderer/lib/utils'
 import { useConnections } from '@renderer/state/connections'
-import { useEditor } from '@renderer/state/editor'
+import { openEntry } from '@renderer/state/editor'
 import { NO_SCHEMA, useSchema } from '@renderer/state/schema'
 import { DEFAULT_SIZE_LIMIT, useSearch, type SearchParams } from '@renderer/state/search'
-import { useTree } from '@renderer/state/tree'
 import { EntryIcon } from '@renderer/tree/EntryIcon'
 import { entryKind, type EntryKind } from '@renderer/tree/entry-kind'
-import { keyOf } from '@renderer/tree/model'
 import { describeBinary } from '@shared/binary'
-import { isDescendantOf, parseDn } from '@shared/dn'
 import type { SearchEntry, SearchScope } from '@shared/ipc'
 import { attributeListSuggestions, filterDiagnostics, filterSuggestions } from './assist'
 import { CodeField } from './CodeField'
@@ -286,24 +283,6 @@ function resultKind(entry: SearchEntry): EntryKind {
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-/** Opens a result in the editor, revealing it in the tree when it is below one of the roots. */
-async function openResult(connectionId: string, dn: string, revealOnly = false): Promise<void> {
-  const tree = useTree.getState()
-  const roots = tree.trees[connectionId]?.rootKeys ?? []
-  const parsed = parseDn(dn)
-  const inTree =
-    parsed.ok &&
-    roots.some((root) => {
-      const rootDn = parseDn(tree.trees[connectionId]?.nodes[root]?.dn ?? '')
-      return rootDn.ok && (keyOf(dn) === root || isDescendantOf(parsed.dn, rootDn.dn))
-    })
-  if (inTree) {
-    await tree.reveal(connectionId, dn)
-  } else if (!revealOnly) {
-    useEditor.getState().requestOpen(connectionId, dn)
-  }
-}
-
 function ResultsTable(): React.JSX.Element {
   const results = useSearch((store) => store.results)
   const columns = useSearch((store) => store.columns)
@@ -389,8 +368,8 @@ function ResultsTable(): React.JSX.Element {
                 key={entry.dn}
                 label={`Actions for ${entry.dn}`}
                 items={[
-                  { label: 'Open', onSelect: () => void openResult(connectionId, entry.dn) },
-                  { label: 'Show in tree', onSelect: () => void openResult(connectionId, entry.dn, true) },
+                  { label: 'Open', onSelect: () => void openEntry(connectionId, entry.dn) },
+                  { label: 'Show in tree', onSelect: () => void openEntry(connectionId, entry.dn, true) },
                   {
                     label: 'Copy DN',
                     onSelect: () => void window.api.invoke('clipboard.writeText', { text: entry.dn }),
@@ -402,10 +381,10 @@ function ResultsTable(): React.JSX.Element {
                   tabIndex={0}
                   aria-rowindex={item.index + 1}
                   aria-label={entry.dn}
-                  onClick={() => void openResult(connectionId, entry.dn)}
+                  onClick={() => void openEntry(connectionId, entry.dn)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
-                      void openResult(connectionId, entry.dn)
+                      void openEntry(connectionId, entry.dn)
                     }
                   }}
                   className="absolute inset-x-0 grid cursor-default items-center gap-4 px-3.5 text-xs outline-none hover:bg-hover focus-visible:bg-selection"

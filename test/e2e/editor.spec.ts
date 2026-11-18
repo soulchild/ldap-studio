@@ -338,6 +338,37 @@ test.describe('choosing DN values (entry-editing spec)', () => {
     }
   })
 
+  test('goes to the entry a DN value names', async () => {
+    const group = `cn=Links,${container}`
+    const missing = 'uid=nobody,ou=people,dc=example,dc=com'
+    await admin.add(group, {
+      objectClass: ['top', 'groupOfNames'],
+      cn: 'Links',
+      member: ['uid=jdoe,ou=people,dc=example,dc=com', missing],
+    })
+    try {
+      await open(group)
+      const member = attribute('member')
+      await member.hover()
+      // Only DN-valued attributes offer it.
+      await expect(attribute('cn').getByRole('button', { name: /^Go to/ })).toHaveCount(0)
+      await member.getByRole('button', { name: 'Go to member value' }).first().click()
+      const tree = page.getByRole('tree', { name: 'Directory tree' })
+      await expect(tree.getByRole('treeitem', { name: 'uid=jdoe', exact: true })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      await expect(editor().getByRole('heading', { name: 'jdoe' })).toBeVisible()
+
+      await open(group)
+      await member.hover()
+      await member.getByRole('button', { name: 'Go to member value' }).nth(1).click()
+      await expect(editor()).toContainText('This entry no longer exists on the server.')
+    } finally {
+      await admin.del(group).catch(() => undefined)
+    }
+  })
+
   test('opens the chooser for a new, empty value at the top of the directory', async () => {
     await open(entryDn)
     await editor().getByRole('button', { name: 'Add attribute' }).click()
