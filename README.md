@@ -77,3 +77,7 @@ src/
 ```
 
 Lint enforces the boundaries: `src/shared` may not import Electron, Node built-ins or app layers, and the renderer may not import Electron, Node built-ins or main-process code.
+
+## License
+
+[MIT](LICENSE)
