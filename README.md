@@ -1,6 +1,9 @@
 # LDAP Studio
 
-A fast, modern desktop LDAP browser and editor. It's built with Electron, React and TypeScript, and needs no Java.
+A fast, modern desktop LDAP browser and editor, reminiscent of Apache Directory Studio, but built with Electron, React and TypeScript.
+
+> [!IMPORTANT] AI-generated code
+> The majority of the code in this repository was created with AI assistance (Claude Code).
 
 ## Prerequisites
 
