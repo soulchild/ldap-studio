@@ -2,6 +2,21 @@
 
 All notable changes to LDAP Studio.
 
+## 0.0.2 (2026-11-19)
+
+### Added
+
+- **editor:** Highlight hovered value and add "go to entry" button (#1)
+- **editor:** Edit multi-line values in a resizable text area
+
+### Changed
+
+- Merge branch 'main' of github.com:soulchild/ldap-studio
+
+### Fixed
+
+- **connections:** Use the async safeStorage API instead of the deprecated sync one
+
 ## 0.0.1 (2026-11-13)
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "name": "@soulchild/ldap-studio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "A fast, modern LDAP directory browser and editor",
   "license": "MIT",
