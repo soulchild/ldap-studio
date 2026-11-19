@@ -40,8 +40,12 @@ linux:
   category: Development
   maintainer: LDAP Studio
   synopsis: LDAP directory browser and editor
-  artifactName: ${name}-${version}-${arch}.${ext}
+  # The package name is scoped (@soulchild/…), and electron-builder derives the executable,
+  # file and deb package names from it, so set them explicitly.
+  executableName: ldap-studio
+  artifactName: ldap-studio-${version}-${arch}.${ext}
 deb:
+  packageName: ldap-studio
   # electron-builder's defaults plus the sound and GPU buffer libraries Electron links against,
   # which minimal installs lack. Ubuntu 24.04 renamed libasound2 to libasound2t64.
   depends:
