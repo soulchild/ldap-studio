@@ -5,6 +5,31 @@ A fast, modern desktop LDAP browser and editor, reminiscent of Apache Directory 
 > [!IMPORTANT]
 > AI-generated code: The majority of the code in this repository was created with AI assistance (Claude Code).
 
+![LDAP Studio dark mode](./docs/assets/ldap-studio-dark.png)
+
+## Features
+
+- **Works with your directory.** OpenLDAP, 389 Directory Server and Active Directory.
+- **Connect securely.** LDAPS and StartTLS, certificate verification with the option to trust a specific self-signed certificate, and saved passwords protected by your operating system's secure storage.
+- **Browse huge trees.** Expand containers with thousands of entries and scroll smoothly. Filter the tree, jump to any DN, cancel slow loads.
+- **Edit with confidence.** Stage changes, review them in a preview, and save them all at once. Schema checks catch mistakes before they reach the server, and you're warned if someone else changed the entry in the meantime.
+- **Schema-aware editing.** See which attributes an entry may have, with descriptions for every object class and attribute type.
+- **Create, copy, rename, move and delete.** Start a new entry from scratch or from an existing one, and delete whole subtrees with progress shown.
+- **Handle any value.** Pick DN values from the tree and follow them with one click, edit multi-line text, view and import/export binary data like photos and certificates, and set hashed passwords in a dedicated dialog.
+- **Search fast.** Write filters with live validation and autocomplete, page through large result sets, and reuse recent searches.
+- **Stay in flow.** Command palette, keyboard navigation, resizable panes, light and dark themes, and an operation log of everything sent to the server.
+
+## Installation
+
+Download the installer for your platform from the [releases page](https://github.com/soulchild/ldap-studio/releases/latest): a DMG for macOS (Apple Silicon or Intel), an installer for Windows (x64 or Arm64), or an AppImage or `.deb` package for Linux.
+
+> [!NOTE]
+> The apps are not signed with a developer certificate, so your operating system may warn you or refuse to open LDAP Studio on first launch. You have to allow it explicitly:
+>
+> - **macOS:** If macOS says it cannot verify the app, choose Done, then open System Settings → Privacy & Security and click Open Anyway next to the message about LDAP Studio. Alternatively, run `xattr -dr com.apple.quarantine "/Applications/LDAP Studio.app"`.
+> - **Windows:** If SmartScreen shows "Windows protected your PC", click More info, then Run anyway.
+> - **Linux:** Make the AppImage executable with `chmod +x` before running it.
+
 ## Prerequisites
 
 - Node.js 22.12 or newer
